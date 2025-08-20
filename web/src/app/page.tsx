@@ -1,4 +1,5 @@
 "use client";
+import AuthModal from "@/components/auth-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -967,10 +968,7 @@ export default function Landing() {
           </div>
         </div>
       </footer>
-      {/* <AuthModal 
-        isOpen={showAuth} 
-        onClose={() => setShowAuth(false)} 
-      /> */}
+      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </div>
   );
 }
