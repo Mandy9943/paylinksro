@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -23,9 +22,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const authMutation = useMutation({
     mutationFn: async (data: { email: string; password: string }) => {
-      const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
-      const response = await apiRequest("POST", endpoint, data);
-      return response.json();
+      return {
+        sessionId: "<session_id>",
+        user: "<user>",
+      };
+      // const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
+      // const response = await apiRequest("POST", endpoint, data);
+      // return response.json();
     },
     onSuccess: (data) => {
       // Store session ID in localStorage
