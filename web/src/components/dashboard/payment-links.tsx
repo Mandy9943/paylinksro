@@ -25,7 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useQueryClient } from "@tanstack/react-query";
 import { Copy, Edit, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -37,8 +36,8 @@ export default function PaymentLinks() {
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [renameId, setRenameId] = useState<string | null>(null);
-  const [renaming, setRenaming] = useState(false);
-  const qc = useQueryClient();
+  const [renamePending, setRenamePending] = useState(false);
+  // Removed react-query usage
 
   type Link = {
     id: string;
@@ -117,7 +116,16 @@ export default function PaymentLinks() {
     setRenameOpen(true);
   };
 
-  const submitRename = async () => {};
+  const submitRename = async () => {
+    if (!renameId) return;
+    try {
+      setRenamePending(true);
+      // TODO: call API to rename
+      setRenameOpen(false);
+    } finally {
+      setRenamePending(false);
+    }
+  };
 
   const onDuplicate = async () => {};
 
@@ -299,15 +307,15 @@ export default function PaymentLinks() {
             <Button
               variant="outline"
               onClick={() => setRenameOpen(false)}
-              disabled={renaming}
+              disabled={renamePending}
             >
               Anulează
             </Button>
             <Button
               onClick={submitRename}
-              disabled={renaming || !renameValue.trim()}
+              disabled={renamePending || !renameValue.trim()}
             >
-              {renaming ? "Se salvează..." : "Salvează"}
+              {renamePending ? "Se salvează..." : "Salvează"}
             </Button>
           </DialogFooter>
         </DialogContent>

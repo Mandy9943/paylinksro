@@ -11,14 +11,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Clock, TrendingUp, Wallet } from "lucide-react";
 import { useState } from "react";
 
 export default function Payouts() {
-  const qc = useQueryClient();
+  // Removed react-query usage
 
-  const available: { available: number; processing?: number; totalTransferred?: number } = {
+  const available: {
+    available: number;
+    processing?: number;
+    totalTransferred?: number;
+  } = {
     available: 0,
     processing: 0,
     totalTransferred: 0,
@@ -31,17 +34,34 @@ export default function Payouts() {
   const [bankName, setBankName] = useState(bank?.bankName ?? "");
 
   // Stubs until API exists
-  const saveBank = useMutation({
-    mutationFn: async (data: { iban: string; accountName: string; bankName: string }) => {
-      void data;
-      return { ok: true } as const;
+  const [savePending, setSavePending] = useState(false);
+  const [requestPending, setRequestPending] = useState(false);
+  const saveBank = {
+    isPending: savePending,
+    mutate: async (data: {
+      iban: string;
+      accountName: string;
+      bankName: string;
+    }) => {
+      try {
+        setSavePending(true);
+        void data; // TODO: call API
+      } finally {
+        setSavePending(false);
+      }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["bank"] }),
-  });
-  const requestPayout = useMutation({
-    mutationFn: async () => ({ ok: true } as const),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["balance"] }),
-  });
+  } as const;
+  const requestPayout = {
+    isPending: requestPending,
+    mutate: async () => {
+      try {
+        setRequestPending(true);
+        // TODO: call API
+      } finally {
+        setRequestPending(false);
+      }
+    },
+  } as const;
 
   return (
     <div className="space-y-6">

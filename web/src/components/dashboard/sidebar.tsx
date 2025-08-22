@@ -1,5 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { clearToken } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import {
   BarChart3,
@@ -14,7 +16,6 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SidebarProps {
   activeSection: string;
@@ -44,8 +45,9 @@ export default function Sidebar({
 
   const handleLogout = async () => {
     try {
+      clearToken();
     } finally {
-      router.push("/");
+      router.replace("/");
     }
   };
 

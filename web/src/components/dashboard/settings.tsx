@@ -1,6 +1,6 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -17,38 +17,34 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="companyName">Nume companie</Label>
-              <Input 
+              <Input
                 id="companyName"
-                defaultValue="Exemplu SRL" 
+                defaultValue="Exemplu SRL"
                 className="mt-2"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input 
+              <Input
                 id="email"
                 type="email"
-                defaultValue="user@example.ro" 
+                defaultValue="user@example.ro"
                 className="mt-2"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="cui">CUI</Label>
-              <Input 
-                id="cui"
-                placeholder="RO12345678" 
-                className="mt-2"
-              />
+              <Input id="cui" placeholder="RO12345678" className="mt-2" />
             </div>
-            
+
             <Button className="w-full paylink-button-primary">
               Actualizează profilul
             </Button>
           </CardContent>
         </Card>
-        
+
         {/* Payment Settings */}
         <Card>
           <CardHeader>
@@ -58,22 +54,26 @@ export default function Settings() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">Transferuri automate</div>
-                <div className="text-sm text-gray-500">Transfer zilnic automat</div>
+                <div className="text-sm text-gray-500">
+                  Transfer zilnic automat
+                </div>
               </div>
               <Switch defaultChecked />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">Notificări email</div>
-                <div className="text-sm text-gray-500">Pentru fiecare tranzacție</div>
+                <div className="text-sm text-gray-500">
+                  Pentru fiecare tranzacție
+                </div>
               </div>
               <Switch />
             </div>
-            
+
             <div>
               <Label htmlFor="commission">Comision personalizat (%)</Label>
-              <Input 
+              <Input
                 id="commission"
                 type="number"
                 defaultValue="2.0"
@@ -83,9 +83,9 @@ export default function Settings() {
                 className="mt-2"
               />
             </div>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
             >
               Salvează setările
@@ -93,7 +93,7 @@ export default function Settings() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Security Settings */}
       <Card>
         <CardHeader>
@@ -112,15 +112,15 @@ export default function Settings() {
                 </Button>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-medium mb-3">Autentificare în doi pași</h4>
               <div className="space-y-3">
                 <p className="text-sm text-gray-600">
                   Protejează-ți contul cu un nivel suplimentar de securitate
                 </p>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
                 >
                   Activează 2FA

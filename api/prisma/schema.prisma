@@ -1,0 +1,54 @@
+// Prisma schema for PayLinksro
+// DB: PostgreSQL
+// Connection via env var: DATABASE_URL
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id           String           @id @default(cuid())
+    email        String           @unique
+    role         Role             @default(USER)
+    tokenVersion Int              @default(0)
+    disabledAt   DateTime?
+    createdAt    DateTime         @default(now())
+    updatedAt    DateTime         @updatedAt
+    // Later: profile fields, roles, etc
+    sessions     Session[]
+    magicTokens  MagicLinkToken[]
+}
+
+model Session {
+    id        String   @id @default(cuid())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id])
+    createdAt DateTime @default(now())
+    // Optional: expiresAt, userAgent, ip
+}
+
+model MagicLinkToken {
+    id        String           @id @default(cuid())
+    userId    String
+    user      User             @relation(fields: [userId], references: [id])
+    tokenHash String           @unique
+    email     String // redundant to support pre-user flow
+    expiresAt DateTime
+    usedAt    DateTime?
+    createdAt DateTime         @default(now())
+    purpose   MagicLinkPurpose @default(AUTH)
+}
+
+enum MagicLinkPurpose {
+    AUTH
+}
+
+enum Role {
+    USER
+    ADMIN
+}

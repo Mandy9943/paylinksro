@@ -1,12 +1,11 @@
 "use client";
 
+import { requestMagicLink } from "@/api/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useMutation } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 interface AuthModalProps {
@@ -17,48 +16,30 @@ interface AuthModalProps {
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const router = useRouter();
 
-  const authMutation = useMutation({
-    mutationFn: async (data: { email: string; password: string }) => {
-      return {
-        sessionId: "<session_id>",
-        user: "<user>",
-      };
-      // const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
-      // const response = await apiRequest("POST", endpoint, data);
-      // return response.json();
-    },
-    onSuccess: (data) => {
-      // Store session ID in localStorage
-      localStorage.setItem("sessionId", data.sessionId);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      toast("Succes!", {
-        description: isLogin
-          ? "Te-ai conectat cu succes!"
-          : "Contul a fost creat cu succes!",
-      });
-
-      onClose();
-      router.push("/dashboard");
-    },
-    onError: (error: unknown) => {
-      const description =
-        error instanceof Error
-          ? error.message
-          : typeof error === "string"
-          ? error
-          : "A apărut o eroare";
-
-      toast("Eroare", { description });
-    },
-  });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    authMutation.mutate({ email, password });
+    setSubmitting(true);
+    requestMagicLink(email)
+      .then(() => {
+        toast("Verifică emailul", {
+          description:
+            "Ți-am trimis un link de autentificare. Dă click pe el pentru a continua.",
+        });
+        onClose();
+      })
+      .catch((error: unknown) => {
+        const description =
+          error instanceof Error
+            ? error.message
+            : typeof error === "string"
+            ? error
+            : "A apărut o eroare";
+        toast("Eroare", { description });
+      })
+      .finally(() => setSubmitting(false));
   };
 
   if (!isOpen) return null;
@@ -106,30 +87,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               />
             </div>
 
-            <div>
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium text-gray-700"
-              >
-                Parolă
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Parola ta"
-                required
-                className="mt-2"
-              />
-            </div>
+            {/* Password removed: magic link flow only needs email */}
 
             <Button
               type="submit"
               className="w-full paylink-button-primary"
-              disabled={authMutation.isPending}
+              disabled={submitting}
             >
-              {authMutation.isPending
+              {submitting
                 ? "Se procesează..."
                 : isLogin
                 ? "Conectează-te"

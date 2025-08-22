@@ -49,15 +49,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "sonner";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+// Removed react-query. Using local state and direct calls instead.
 import {
   CheckCircle,
   CreditCard,
   Download,
   MoreHorizontal,
 } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
+import { toast } from "sonner";
 
 type PaymentMethod = { type: string; brand: string; last4: string };
 type TransactionRaw = {
@@ -118,14 +118,17 @@ export default function Transactions() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
-  const [selectedTx, setSelectedTx] = useState<TransactionDisplay | null>(
-    null
-  );
-  const qc = useQueryClient();
+  const [selectedTx, setSelectedTx] = useState<TransactionDisplay | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<{
+    counts: Record<string, number>;
+    items: TransactionRaw[];
+  } | null>(null);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["transactions", statusFilter],
-    queryFn: async () => {
+  React.useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
       // Mock items
       const base: TransactionRaw[] = [
         {
@@ -168,7 +171,7 @@ export default function Transactions() {
           receiptUrl: "#",
         },
       ];
-      return {
+      const result = {
         counts: {
           all: base.length,
           succeeded: base.filter((t) => t.status === "succeeded").length,
@@ -179,8 +182,14 @@ export default function Transactions() {
         },
         items: base,
       };
-    },
-  });
+      if (!cancelled) setData(result);
+      setIsLoading(false);
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [statusFilter]);
 
   const statusCounts = {
     all: data?.counts.all ?? 0,
@@ -191,37 +200,39 @@ export default function Transactions() {
     uncaptured: data?.counts.uncaptured ?? 0,
   };
 
-  const items: TransactionDisplay[] = (data?.items ?? []).map((t: TransactionRaw) => ({
-    id: t.id,
-    amount: new Intl.NumberFormat("ro-RO", {
-      style: "currency",
-      currency: t.currency || "RON",
-    }).format(t.amount || 0),
-    currency: (t.currency || "RON").toUpperCase(),
-    status:
-      t.status === "succeeded"
-        ? "Succeeded"
-        : t.status === "failed"
-        ? "Failed"
-        : "Pending",
-    paymentMethod: {
-      type: t.paymentMethodType || "card",
-      brand: t.cardBrand || "card",
-      last4: t.cardLast4 || "0000",
-    },
-    description: t.stripePaymentIntentId || t.stripeChargeId || t.id,
-    customer: t.customerEmail ?? "-",
-    date: new Date(t.createdAt).toLocaleString("ro-RO", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
-    refundedDate: "—",
-    declineReason: "—",
-    receiptUrl: t.receiptUrl,
-    __raw: t,
-  }));
+  const items: TransactionDisplay[] = (data?.items ?? []).map(
+    (t: TransactionRaw) => ({
+      id: t.id,
+      amount: new Intl.NumberFormat("ro-RO", {
+        style: "currency",
+        currency: t.currency || "RON",
+      }).format(t.amount || 0),
+      currency: (t.currency || "RON").toUpperCase(),
+      status:
+        t.status === "succeeded"
+          ? "Succeeded"
+          : t.status === "failed"
+          ? "Failed"
+          : "Pending",
+      paymentMethod: {
+        type: t.paymentMethodType || "card",
+        brand: t.cardBrand || "card",
+        last4: t.cardLast4 || "0000",
+      },
+      description: t.stripePaymentIntentId || t.stripeChargeId || t.id,
+      customer: t.customerEmail ?? "-",
+      date: new Date(t.createdAt).toLocaleString("ro-RO", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      refundedDate: "—",
+      declineReason: "—",
+      receiptUrl: t.receiptUrl,
+      __raw: t,
+    })
+  );
 
   const filteredTransactions = items; // server does filtering
 
@@ -241,22 +252,29 @@ export default function Transactions() {
     }
   };
 
-  const refundMut = useMutation({
-    mutationFn: (id: string) => refundTransaction(id),
-    onSuccess: () => {
-      toast.success("Rambursare inițiată");
-      qc.invalidateQueries({ queryKey: ["transactions", statusFilter] });
+  const refundMut = {
+    isPending: false,
+    mutateAsync: async (id: string) => {
+      try {
+        await refundTransaction(id);
+        toast.success("Rambursare inițiată");
+      } catch {
+        toast.error("Eroare rambursare");
+      }
     },
-    onError: () => {
-      toast.error("Eroare rambursare");
-    },
-  });
+  } as const;
 
-  const receiptMut = useMutation({
-    mutationFn: (id: string) => sendReceipt(id),
-    onSuccess: () => toast.success("Chitanță trimisă"),
-    onError: () => toast.error("Eroare trimitere chitanță"),
-  });
+  const receiptMut = {
+    isPending: false,
+    mutateAsync: async (id: string) => {
+      try {
+        await sendReceipt(id);
+        toast.success("Chitanță trimisă");
+      } catch {
+        toast.error("Eroare trimitere chitanță");
+      }
+    },
+  } as const;
 
   const copyPaymentId = async (id: string) => {
     try {

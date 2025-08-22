@@ -1,25 +1,25 @@
 "use client";
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  Copy,
-  Download,
+import {
   BarChart3,
-  Edit3,
-  CreditCard,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Copy,
+  CreditCard,
+  Download,
+  Edit3,
 } from "lucide-react";
+import { useState } from "react";
 
 const customerTabs = [
   { id: "all", label: "Toți", count: null },
@@ -28,7 +28,7 @@ const customerTabs = [
   { id: "repeat", label: "Clienți recurenți", count: null },
   { id: "recent", label: "Clienți recenți", count: null },
   { id: "high-refunds", label: "Rambursări multe", count: null },
-  { id: "high-disputes", label: "Contestații multe", count: null }
+  { id: "high-disputes", label: "Contestații multe", count: null },
 ];
 
 const mockCustomers = [
@@ -42,11 +42,11 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "2 Aug"
+    lastSeen: "2 Aug",
   },
   {
     name: "MISS G CRISAN",
-    type: "Guest", 
+    type: "Guest",
     email: "geanina_crisan25@yahoo.com",
     paymentMethod: { brand: "visa", last4: "4744" },
     created: "1 Aug, 21:13",
@@ -54,7 +54,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "1 Aug"
+    lastSeen: "1 Aug",
   },
   {
     name: "Magdalena curylo",
@@ -66,7 +66,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "29 Jul"
+    lastSeen: "29 Jul",
   },
   {
     name: "Ramona Bocan",
@@ -78,7 +78,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "28 Jul"
+    lastSeen: "28 Jul",
   },
   {
     name: "Mr S Vadeanu",
@@ -90,7 +90,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "21 Jul"
+    lastSeen: "21 Jul",
   },
   {
     name: "Andrea Garcia Londono",
@@ -102,7 +102,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "20 Jul"
+    lastSeen: "20 Jul",
   },
   {
     name: "Desislava H Koeva",
@@ -114,7 +114,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "17 Jul"
+    lastSeen: "17 Jul",
   },
   {
     name: "Farshid Malecki",
@@ -126,7 +126,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "15 Jul"
+    lastSeen: "15 Jul",
   },
   {
     name: "Narcis Popa",
@@ -138,7 +138,7 @@ const mockCustomers = [
     payments: 2,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "17 Jul"
+    lastSeen: "17 Jul",
   },
   {
     name: "Razvan Marcocci",
@@ -150,7 +150,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "13 Jul"
+    lastSeen: "13 Jul",
   },
   {
     name: "Vasile Sandu",
@@ -162,7 +162,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "13 Jul"
+    lastSeen: "13 Jul",
   },
   {
     name: "gheorghe baiculescu",
@@ -174,7 +174,7 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "12 Jul"
+    lastSeen: "12 Jul",
   },
   {
     name: "Regele Englez",
@@ -186,20 +186,32 @@ const mockCustomers = [
     payments: 1,
     refunds: "RON 0.00",
     disputeLosses: "RON 0.00",
-    lastSeen: "12 Jul"
-  }
+    lastSeen: "12 Jul",
+  },
 ];
 
 type Method = { brand: string; last4: string };
 function PaymentMethodIcon({ method }: { method: Method }) {
   if (method.brand === "visa") {
-    return <div className="w-6 h-4 bg-blue-600 text-white text-xs font-bold flex items-center justify-center rounded">VISA</div>;
+    return (
+      <div className="w-6 h-4 bg-blue-600 text-white text-xs font-bold flex items-center justify-center rounded">
+        VISA
+      </div>
+    );
   }
   if (method.brand === "mastercard") {
-    return <div className="w-6 h-4 bg-red-500 text-white text-xs font-bold flex items-center justify-center rounded">MC</div>;
+    return (
+      <div className="w-6 h-4 bg-red-500 text-white text-xs font-bold flex items-center justify-center rounded">
+        MC
+      </div>
+    );
   }
   if (method.brand === "amex") {
-    return <div className="w-6 h-4 bg-green-600 text-white text-xs font-bold flex items-center justify-center rounded">AX</div>;
+    return (
+      <div className="w-6 h-4 bg-green-600 text-white text-xs font-bold flex items-center justify-center rounded">
+        AX
+      </div>
+    );
   }
   return <CreditCard className="w-4 h-4 text-gray-400" />;
 }
@@ -212,23 +224,43 @@ export default function Customers() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-slate-500 mb-1">Gestionează relațiile cu</p>
-          <h2 className="text-xl font-semibold text-slate-900">Toți clienții</h2>
+          <p className="text-sm text-slate-500 mb-1">
+            Gestionează relațiile cu
+          </p>
+          <h2 className="text-xl font-semibold text-slate-900">
+            Toți clienții
+          </h2>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
+          >
             <Copy className="h-3.5 w-3.5" />
             Copiează
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
+          >
             <Download className="h-3.5 w-3.5" />
             Exportă
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
+          >
             <BarChart3 className="h-3.5 w-3.5" />
             Analizează
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
+          >
             <Edit3 className="h-3.5 w-3.5" />
             Editează coloanele
           </Button>
@@ -244,15 +276,19 @@ export default function Customers() {
             size="sm"
             onClick={() => setActiveTab(tab.id)}
             className={`whitespace-nowrap h-8 px-3 text-xs font-medium rounded-lg transition-all ${
-              activeTab === tab.id 
-                ? "bg-blue-600 text-white shadow-sm" 
+              activeTab === tab.id
+                ? "bg-blue-600 text-white shadow-sm"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
             }`}
           >
             {tab.label}
           </Button>
         ))}
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100/70">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 hover:bg-slate-100/70"
+        >
           <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
         </Button>
       </div>
@@ -263,24 +299,52 @@ export default function Customers() {
           <Table>
             <TableHeader className="bg-slate-50/50">
               <TableRow className="border-b border-slate-200/60">
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">Nume</TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">Email</TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">Metoda de plată implicită</TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">Creat ↕</TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">Total cheltuit ↕</TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">Plăți ↕</TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">Rambursări ↕</TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">Pierderi din contestații ↕</TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">Ultima vizită</TableHead>
+                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                  Nume
+                </TableHead>
+                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                  Email
+                </TableHead>
+                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                  Metoda de plată implicită
+                </TableHead>
+                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                  Creat ↕
+                </TableHead>
+                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                  Total cheltuit ↕
+                </TableHead>
+                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                  Plăți ↕
+                </TableHead>
+                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                  Rambursări ↕
+                </TableHead>
+                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                  Pierderi din contestații ↕
+                </TableHead>
+                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                  Ultima vizită
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {mockCustomers.map((customer, index) => (
-                <TableRow key={index} className={`border-b border-slate-100 hover:bg-slate-50/30 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
+                <TableRow
+                  key={index}
+                  className={`border-b border-slate-100 hover:bg-slate-50/30 transition-colors ${
+                    index % 2 === 0 ? "bg-white" : "bg-slate-50/20"
+                  }`}
+                >
                   <TableCell className="py-3 px-4">
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium text-slate-900 text-sm">{customer.name}</span>
-                      <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-600 border-0 px-2 py-0.5">
+                      <span className="font-medium text-slate-900 text-sm">
+                        {customer.name}
+                      </span>
+                      <Badge
+                        variant="secondary"
+                        className="text-xs bg-slate-100 text-slate-600 border-0 px-2 py-0.5"
+                      >
                         {customer.type === "Guest" ? "Invitat" : customer.type}
                       </Badge>
                     </div>
@@ -291,7 +355,9 @@ export default function Customers() {
                   <TableCell className="py-3 px-4">
                     <div className="flex items-center space-x-2">
                       <PaymentMethodIcon method={customer.paymentMethod} />
-                      <span className="text-xs text-slate-500">•••• {customer.paymentMethod.last4}</span>
+                      <span className="text-xs text-slate-500">
+                        •••• {customer.paymentMethod.last4}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-xs text-slate-600 py-3 px-4">
@@ -325,11 +391,19 @@ export default function Customers() {
           Afișare 1–10 din {mockCustomers.length} rezultate
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" className="h-8 px-3 text-xs border-slate-200 hover:bg-slate-50">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
+          >
             <ChevronLeft className="w-3.5 h-3.5 mr-1" />
             Anterior
           </Button>
-          <Button variant="outline" size="sm" className="h-8 px-3 text-xs border-slate-200 hover:bg-slate-50">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
+          >
             Următorul
             <ChevronRight className="w-3.5 h-3.5 ml-1" />
           </Button>

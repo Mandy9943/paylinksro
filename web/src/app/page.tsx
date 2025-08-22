@@ -3,6 +3,8 @@ import AuthModal from "@/components/auth-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
+import { getToken } from "@/lib/api";
 import { motion } from "framer-motion";
 import {
   CheckCircle,
@@ -13,10 +15,22 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Landing() {
   const [showAuth, setShowAuth] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  const handleStart = () => {
+    // Fast path: if we already have a token or auth resolved, go to dashboard
+    if (isAuthenticated || (typeof window !== "undefined" && !!getToken())) {
+      router.push("/dashboard");
+      return;
+    }
+    setShowAuth(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -86,7 +100,7 @@ export default function Landing() {
               whileTap={{ scale: 0.95 }}
             >
               <Button
-                onClick={() => setShowAuth(true)}
+                onClick={handleStart}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
               >
                 Începe Gratuit
@@ -184,7 +198,7 @@ export default function Landing() {
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <Button
-                  onClick={() => setShowAuth(true)}
+                  onClick={handleStart}
                   className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-12 py-6 text-xl font-bold shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 border-2 border-white/20"
                   style={{
                     animation: "subtle-glow 4s ease-in-out infinite",
@@ -729,7 +743,7 @@ export default function Landing() {
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   >
                     <Button
-                      onClick={() => setShowAuth(true)}
+                      onClick={handleStart}
                       className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-white py-8 px-8 text-xl font-bold shadow-2xl hover:shadow-blue-500/30 transition-all duration-500 border-2 border-white/20 rounded-2xl relative overflow-hidden group"
                       style={{
                         background:
@@ -839,7 +853,7 @@ export default function Landing() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
             <Button
-              onClick={() => setShowAuth(true)}
+              onClick={handleStart}
               className="bg-gradient-to-r from-green-500 via-blue-500 to-purple-600 hover:from-green-600 hover:via-blue-600 hover:to-purple-700 text-white px-12 py-6 text-xl font-bold shadow-2xl hover:shadow-green-500/25 transition-all duration-500 border-2 border-white/20 group"
             >
               Începe gratuit în 30 secunde

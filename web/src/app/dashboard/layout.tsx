@@ -3,7 +3,8 @@ import CreatePaymentLinkModal from "@/components/dashboard/create-payment-link-m
 import Sidebar from "@/components/dashboard/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Menu, Plus } from "lucide-react";
+import { captureTokenFromHash } from "@/lib/api";
+import { Loader, Menu, Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 
@@ -13,12 +14,19 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [bootstrapped, setBootstrapped] = useState(false);
+
+  // Ensure we capture token from URL fragment before auth check
+  useEffect(() => {
+    captureTokenFromHash();
+    setBootstrapped(true);
+  }, []);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (bootstrapped && !isLoading && !isAuthenticated) {
       router.push("/");
     }
-  }, [isAuthenticated, isLoading]);
+  }, [bootstrapped, isAuthenticated, isLoading, router]);
 
   const sectionTitles: Record<string, string> = {
     "payment-links": "Link-uri de plată",
@@ -36,6 +44,23 @@ const Layout = ({ children }: { children: ReactNode }) => {
     const sub = match?.[1] ?? "payment-links";
     return sub as keyof typeof sectionTitles as string;
   }, [pathname]);
+  // Prevent flashing private content: show nothing until auth is determined
+  if (!bootstrapped || isLoading) {
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div>
+        <Loader className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar
