@@ -49,7 +49,6 @@ export function useStripeAccount() {
   const refresh = useCallback(() => mutate(), [mutate]);
 
   const account = data ?? null;
-  console.log(account);
 
   const isOnboarded = !!(
     account &&

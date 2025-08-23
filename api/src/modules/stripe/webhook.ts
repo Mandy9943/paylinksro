@@ -46,7 +46,6 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
           select: { id: true },
         });
         if (!user) break;
-        console.log(account);
 
         const isOnboarded = !!(
           account.details_submitted || (account as any).charges_enabled
