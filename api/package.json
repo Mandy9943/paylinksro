@@ -17,7 +17,8 @@
     "prisma:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "stripe:webhook": "stripe listen --forward-to localhost:4000/webhooks/stripe"
+    "stripe:webhook": "stripe listen --forward-to localhost:4000/webhooks/stripe",
+    "postinstall": "npx prisma generate"
   },
   "author": "Mandy9943",
   "license": "MIT",
