@@ -14,8 +14,9 @@ export default function Settings() {
     <div className="max-w-4xl space-y-6">
       {!isOnboarded && (
         <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-          Finalizează onboarding-ul Stripe pentru a accesa toate
-          funcționalitățile. Componentele de mai jos te vor ghida.
+          Trebuie să-ți configurezi contul de plăți pentru a accesa toate
+          funcționalitățile. Poți începe de aici sau din pagina dedicată de
+          configurare.
         </div>
       )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

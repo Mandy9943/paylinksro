@@ -63,10 +63,10 @@ const Layout = ({ children }: { children: ReactNode }) => {
     return null;
   }
 
-  // Require Stripe onboarding completion to access dashboard; route to settings to complete
+  // Require Stripe onboarding completion to access dashboard; route to standalone onboarding
   const allow = onboarded || isOnboarded;
   if (!isStripeLoading && !allow && activeSection !== "settings") {
-    redirect("/dashboard/settings");
+    redirect("/onboarding");
   }
 
   return (

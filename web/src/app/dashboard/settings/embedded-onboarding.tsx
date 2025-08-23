@@ -59,11 +59,11 @@ export default function EmbeddedOnboarding() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Embedded onboarding</CardTitle>
+        <CardTitle>Configurare cont de plăți</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Button onClick={start} disabled={loading}>
-          Start embedded onboarding
+          Începe configurarea
         </Button>
         {error && <div className="text-sm text-red-600">{error}</div>}
         {connectInstance ? (

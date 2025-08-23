@@ -52,11 +52,11 @@ export default function EmbeddedManagement() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Embedded account management</CardTitle>
+        <CardTitle>Administrare cont de plăți</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Button onClick={start} disabled={loading}>
-          Open management
+          Deschide administrarea
         </Button>
         {error && <div className="text-sm text-red-600">{error}</div>}
         {connectInstance ? (
