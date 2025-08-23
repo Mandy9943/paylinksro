@@ -5,7 +5,7 @@ type User = { id: string; email: string; role: "USER" | "ADMIN" };
 
 const fetcher = async (url: string) => {
   const res = await api.get(url);
-  return res.data as { user: User };
+  return res.data as { user: User; onboarded?: boolean };
 };
 
 export const useAuth = () => {
@@ -19,6 +19,7 @@ export const useAuth = () => {
   return {
     user: data?.user ?? null,
     isAuthenticated: !!data?.user,
+    onboarded: !!data?.onboarded,
     isLoading,
     error: error as Error | undefined,
     refresh: () => mutate(),

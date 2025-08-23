@@ -52,10 +52,11 @@ export async function requestMagicLink(email: string, redirectTo?: string) {
 
   await sendMail({
     to: normalizedEmail,
-    subject: "Your sign-in link",
+    subject: "Link de autentificare",
     html: `
-      <p>Click the link below to sign in. This link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.</p>
-      <p><a href="${verifyUrl.toString()}">Sign in</a></p>
+      <p>Apasă pe linkul de mai jos pentru a te autentifica. Acest link expiră în ${MAGIC_LINK_TTL_MINUTES} minute.</p>
+      <p><a href="${verifyUrl.toString()}">Autentifică-te</a></p>
+      <p style="color:#6b7280;font-size:12px;">Dacă nu ai solicitat acest email, îl poți ignora în siguranță.</p>
     `.trim(),
   });
 

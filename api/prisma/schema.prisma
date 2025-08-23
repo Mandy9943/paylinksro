@@ -12,16 +12,19 @@ datasource db {
 }
 
 model User {
-    id           String           @id @default(cuid())
-    email        String           @unique
-    role         Role             @default(USER)
-    tokenVersion Int              @default(0)
-    disabledAt   DateTime?
-    createdAt    DateTime         @default(now())
-    updatedAt    DateTime         @updatedAt
+    id                      String           @id @default(cuid())
+    email                   String           @unique
+    role                    Role             @default(USER)
+    tokenVersion            Int              @default(0)
+    stripeAccountId         String?          @unique
+    onboardedAt             DateTime?
+    stripeAccountStatusJson String?
+    disabledAt              DateTime?
+    createdAt               DateTime         @default(now())
+    updatedAt               DateTime         @updatedAt
     // Later: profile fields, roles, etc
-    sessions     Session[]
-    magicTokens  MagicLinkToken[]
+    sessions                Session[]
+    magicTokens             MagicLinkToken[]
 }
 
 model Session {

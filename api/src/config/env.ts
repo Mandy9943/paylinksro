@@ -11,14 +11,14 @@ const EnvSchema = z.object({
   JWT_EXPIRES_IN: z.string().default("7d"),
   APP_ORIGIN: z.string().url(),
   API_ORIGIN: z.string().url(),
+  // Stripe
+  STRIPE_SECRET_KEY: z.string(),
+  STRIPE_PUBLISHABLE_KEY: z.string(),
+  STRIPE_WEBHOOK_SECRET: z.string(),
   // Resend email
-  RESEND_API_KEY: z.string().optional(),
+  RESEND_API_KEY: z.string(),
   MAIL_FROM: z.string().default("PayLinks <salut@paylinks.ro>"),
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().int().optional(),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
-  SMTP_FROM: z.string().optional(),
 });
 
-export const env = EnvSchema.parse(process.env);
+export type AppEnv = z.infer<typeof EnvSchema>;
+export const env: AppEnv = EnvSchema.parse(process.env);

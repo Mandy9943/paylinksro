@@ -16,12 +16,14 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "stripe:webhook": "stripe listen --forward-to localhost:4000/webhooks/stripe"
   },
   "author": "Mandy9943",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^5.18.0",
+    "stripe": "^18.4.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",

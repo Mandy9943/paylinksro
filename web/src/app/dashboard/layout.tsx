@@ -3,9 +3,10 @@ import CreatePaymentLinkModal from "@/components/dashboard/create-payment-link-m
 import Sidebar from "@/components/dashboard/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useStripeAccount } from "@/hooks/useStripeAccount";
 import { captureTokenFromHash } from "@/lib/api";
 import { Loader, Menu, Plus } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { redirect, usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 
 const Layout = ({ children }: { children: ReactNode }) => {
@@ -13,7 +14,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, onboarded } = useAuth();
+  const { isOnboarded, isLoading: isStripeLoading } = useStripeAccount();
   const [bootstrapped, setBootstrapped] = useState(false);
 
   // Ensure we capture token from URL fragment before auth check
@@ -45,7 +47,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
     return sub as keyof typeof sectionTitles as string;
   }, [pathname]);
   // Prevent flashing private content: show nothing until auth is determined
-  if (!bootstrapped || isLoading) {
+  if (!bootstrapped || isLoading || isStripeLoading) {
     return null;
   }
 
@@ -59,6 +61,12 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
   if (!isAuthenticated) {
     return null;
+  }
+
+  // Require Stripe onboarding completion to access dashboard; route to settings to complete
+  const allow = onboarded || isOnboarded;
+  if (!isStripeLoading && !allow && activeSection !== "settings") {
+    redirect("/dashboard/settings");
   }
 
   return (

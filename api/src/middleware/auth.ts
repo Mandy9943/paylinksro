@@ -3,7 +3,7 @@ import { verifyJwt } from "../lib/jwt.js";
 import { prisma } from "../lib/prisma.js";
 
 export interface AuthedRequest extends Request {
-  user?: { id: string; role: "USER" | "ADMIN" };
+  user?: { id: string; role: "USER" | "ADMIN"; email: string };
 }
 
 export async function requireAuth(
@@ -26,7 +26,7 @@ export async function requireAuth(
     if ((decoded.ver ?? 0) !== user.tokenVersion)
       return res.status(401).json({ error: { message: "Token revoked" } });
 
-    req.user = { id: user.id, role: user.role as any };
+    req.user = { id: user.id, role: user.role as any, email: user.email };
     next();
   } catch {
     return res.status(401).json({ error: { message: "Unauthorized" } });

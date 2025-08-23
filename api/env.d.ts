@@ -9,10 +9,10 @@ namespace NodeJS {
     JWT_EXPIRES_IN?: string;
     APP_ORIGIN: string;
     API_ORIGIN: string;
-    SMTP_HOST?: string;
-    SMTP_PORT?: string;
-    SMTP_USER?: string;
-    SMTP_PASS?: string;
-    SMTP_FROM?: string;
+    STRIPE_SECRET_KEY: string;
+    STRIPE_PUBLISHABLE_KEY: string;
+    STRIPE_WEBHOOK_SECRET: string;
+    RESEND_API_KEY: string;
+    MAIL_FROM: string;
   }
 }

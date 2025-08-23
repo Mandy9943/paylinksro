@@ -1,13 +1,23 @@
 "use client";
+import EmbeddedManagement from "@/app/dashboard/settings/embedded-management";
+import EmbeddedOnboarding from "@/app/dashboard/settings/embedded-onboarding";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useStripeAccount } from "@/hooks/useStripeAccount";
 
 export default function Settings() {
+  const { isOnboarded } = useStripeAccount();
   return (
     <div className="max-w-4xl space-y-6">
+      {!isOnboarded && (
+        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          Finalizează onboarding-ul Stripe pentru a accesa toate
+          funcționalitățile. Componentele de mai jos te vor ghida.
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Account Settings */}
         <Card>
@@ -130,6 +140,10 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+      {/* Stripe embedded components */}
+      {/* <CreateProduct /> */}
+      <EmbeddedOnboarding />
+      <EmbeddedManagement />
     </div>
   );
 }

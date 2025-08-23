@@ -1,3 +1,4 @@
+import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -7,6 +8,7 @@ import pinoHttp from "pino-http";
 import { env } from "../config/env.js";
 import { logger } from "../lib/logger.js";
 import { errorHandler } from "../middleware/error-handler.js";
+import { stripeWebhookHandler } from "../modules/stripe/webhook.js";
 import { router } from "./routes.js";
 
 export function buildApp() {
@@ -55,6 +57,14 @@ export function buildApp() {
   );
   app.use(helmet());
   app.use(cors({ origin: env.APP_ORIGIN, credentials: true }));
+  // Stripe webhooks require the raw body for signature verification.
+  // Mount raw parser only for the webhook endpoint.
+  app.post(
+    "/webhooks/stripe",
+    bodyParser.raw({ type: "application/json" }),
+    stripeWebhookHandler as any
+  );
+
   app.use(express.json());
   app.use(cookieParser());
 
@@ -64,6 +74,9 @@ export function buildApp() {
   app.get("/health", (_req, res) => res.json({ ok: true }));
 
   app.use("/api/v1", router);
+
+  // Webhooks mounted at root (not versioned) to avoid auth middleware and CORS noise
+  // The actual handler is attached in routes.ts import side-effect.
 
   app.use(errorHandler);
 
