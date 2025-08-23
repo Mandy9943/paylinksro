@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p .",
+    "build": "npx prisma migrate deploy && tsc -p .",
     "start": "node dist/server.js",
     "lint": "echo 'Add eslint later'",
     "prisma:generate": "prisma generate",
