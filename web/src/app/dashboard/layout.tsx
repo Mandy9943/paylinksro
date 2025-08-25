@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useStripeAccount } from "@/hooks/useStripeAccount";
 import { captureTokenFromHash } from "@/lib/api";
 import { Loader, Menu, Plus } from "lucide-react";
-import { redirect, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 
 const Layout = ({ children }: { children: ReactNode }) => {
@@ -14,8 +14,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, isLoading, onboarded } = useAuth();
-  const { isOnboarded, isLoading: isStripeLoading } = useStripeAccount();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const { isLoading: isStripeLoading } = useStripeAccount();
   const [bootstrapped, setBootstrapped] = useState(false);
 
   // Ensure we capture token from URL fragment before auth check
@@ -63,11 +63,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
     return null;
   }
 
-  // Require Stripe onboarding completion to access dashboard; route to standalone onboarding
-  const allow = onboarded || isOnboarded;
-  if (!isStripeLoading && !allow && activeSection !== "settings") {
-    redirect("/onboarding");
-  }
+  // No blocking: users can navigate without completing onboarding
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
