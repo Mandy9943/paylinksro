@@ -72,6 +72,11 @@ Example structure (as used by `auth`):
 - Axios instance adds `Authorization: Bearer <token>` from `localStorage` and clears token on 401.
 - On auth callback, call `captureTokenFromHash()` to persist token and remove it from URL.
 - Auth state: `useAuth()` queries `/v1/me` when a token exists. Path alias `@/*` → `web/src/*`.
+- Dashboard data fetching MUST use SWR. Do not use `useEffect` + local state for remote data; instead:
+  - Create small hooks in `web/src/hooks` that wrap axios calls with `useSWR`.
+  - Use stable keys (e.g., `/v1/paylinks`) and return `{ data, isLoading, error, mutate }`.
+  - For mutations, optimistically update via `mutate` and revalidate on success.
+  - Reuse the shared axios instance from `@/lib/api` as the fetcher inside hooks.
 
 ## Build and scripts
 

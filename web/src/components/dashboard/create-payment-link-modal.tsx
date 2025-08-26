@@ -12,7 +12,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   FileText,
-  Image,
+  Image as ImageIcon,
   Info,
   Monitor,
   Plus,
@@ -22,14 +22,18 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { createPayLink } from "@/api/paylinks";
+
 interface CreatePaymentLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onCreated?: (id: string) => void;
 }
 
 export default function CreatePaymentLinkModal({
   isOpen,
   onClose,
+  onCreated,
 }: CreatePaymentLinkModalProps) {
   const [productName, setProductName] = useState("");
   const [description, setDescription] = useState("");
@@ -64,9 +68,57 @@ export default function CreatePaymentLinkModal({
     });
   };
 
-  const uploadAll = async () => {};
+  // Placeholder for future uploads
+  // const uploadAll = async () => {};
 
-  const onSubmit = async () => {};
+  const toSlug = (text: string) =>
+    text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+
+  const onSubmit = async () => {
+    try {
+      setSubmitting(true);
+      const name = productName.trim() || "Produs";
+      const slugBase = toSlug(name);
+      const slug = slugBase || `link-${Date.now()}`;
+      const payload: Parameters<typeof createPayLink>[0] = {
+        name,
+        slug,
+        priceType: priceType === "fixed" ? "FIXED" : "FLEXIBLE",
+        amount:
+          priceType === "fixed"
+            ? Math.max(0, parseFloat(amount || "0"))
+            : undefined,
+        serviceType:
+          selectedType === "servicii"
+            ? "SERVICE"
+            : selectedType === "produse-digitale"
+            ? "DIGITAL_PRODUCT"
+            : "DONATION",
+        description: description || undefined,
+        collectEmail,
+        collectPhone: requirePhone,
+        mainColor: backgroundColor,
+        ...(selectedType === "servicii"
+          ? { service: { title: name, description: description || undefined } }
+          : {}),
+        ...(selectedType === "produse-digitale"
+          ? { product: { name, description: description || undefined } }
+          : {}),
+      };
+      const created = await createPayLink(payload);
+      onCreated?.(created.id);
+      onClose();
+    } catch {
+      // no-op toast here to keep component lean; parent page can show errors globally
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -171,7 +223,11 @@ export default function CreatePaymentLinkModal({
                     </Label>
                     <div className="mt-1 flex items-center space-x-3">
                       <Button variant="outline" size="sm">
-                        <Image className="h-4 w-4 mr-2" />
+                        <ImageIcon
+                          className="h-4 w-4 mr-2"
+                          aria-hidden
+                          role="img"
+                        />
                         Încarcă logo
                       </Button>
                       <span className="text-xs text-gray-500">

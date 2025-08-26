@@ -1,4 +1,10 @@
 "use client";
+
+import {
+  deletePayLink as apiDelete,
+  updatePayLink as apiUpdate,
+  type PayLink,
+} from "@/api/paylinks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { usePayLinks } from "@/hooks/usePayLinks";
 import { Copy, Edit, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -37,63 +44,8 @@ export default function PaymentLinks() {
   const [renameValue, setRenameValue] = useState("");
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renamePending, setRenamePending] = useState(false);
-  // Removed react-query usage
 
-  type Link = {
-    id: string;
-    productName: string;
-    active: boolean;
-    priceType: "fixed" | "flexible";
-    amount?: number;
-    createdAt: string;
-    slug: string;
-  };
-  const data: Link[] = [
-    {
-      id: "pl_1",
-      productName: "Logo Design Basic",
-      active: true,
-      priceType: "fixed",
-      amount: 199.99,
-      createdAt: "2025-08-01T12:30:00.000Z",
-      slug: "logo-design-basic",
-    },
-    {
-      id: "pl_2",
-      productName: "Consultanță 1h",
-      active: true,
-      priceType: "flexible",
-      createdAt: "2025-07-28T09:10:00.000Z",
-      slug: "consultanta-1h",
-    },
-    {
-      id: "pl_3",
-      productName: "Website Landing Page",
-      active: false,
-      priceType: "fixed",
-      amount: 1499,
-      createdAt: "2025-07-15T16:45:00.000Z",
-      slug: "website-landing",
-    },
-    {
-      id: "pl_4",
-      productName: "Ebook: Ghid Freelancing",
-      active: true,
-      priceType: "fixed",
-      amount: 49.9,
-      createdAt: "2025-07-10T08:00:00.000Z",
-      slug: "ebook-ghid-freelancing",
-    },
-    {
-      id: "pl_5",
-      productName: "Donație proiect",
-      active: true,
-      priceType: "flexible",
-      createdAt: "2025-06-30T10:20:00.000Z",
-      slug: "donatie-proiect",
-    },
-  ];
-  const isLoading = false;
+  const { items: data, isLoading, mutate, refresh } = usePayLinks();
 
   const copyUrl = async (slug: string) => {
     const url = `${window.location.origin}/p/${slug}`;
@@ -120,8 +72,16 @@ export default function PaymentLinks() {
     if (!renameId) return;
     try {
       setRenamePending(true);
-      // TODO: call API to rename
+      const updated = await apiUpdate(renameId, { name: renameValue });
+      await mutate(
+        (prev) =>
+          (prev ?? []).map((p) =>
+            p.id === renameId ? { ...p, name: updated.name } : p
+          ),
+        { revalidate: false }
+      );
       setRenameOpen(false);
+      toast.success("Nume actualizat");
     } finally {
       setRenamePending(false);
     }
@@ -129,13 +89,35 @@ export default function PaymentLinks() {
 
   const onDuplicate = async () => {};
 
-  const onToggleActive = async () => {};
+  const onToggleActive = async (link: PayLink) => {
+    try {
+      const updated = await apiUpdate(link.id, { active: !link.active });
+      await mutate(
+        (prev) =>
+          (prev ?? []).map((p) =>
+            p.id === link.id ? { ...p, active: updated.active } : p
+          ),
+        { revalidate: false }
+      );
+    } catch {
+      toast.error("Nu s-a putut actualiza statusul");
+    }
+  };
 
-  const onDelete = async () => {};
+  const onDelete = async (link: PayLink) => {
+    try {
+      await apiDelete(link.id);
+      await mutate((prev) => (prev ?? []).filter((p) => p.id !== link.id), {
+        revalidate: false,
+      });
+      toast.success("Șters");
+    } catch {
+      toast.error("Nu s-a putut șterge");
+    }
+  };
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-slate-500 mb-1">Creează și gestionează</p>
@@ -183,7 +165,7 @@ export default function PaymentLinks() {
                     <TableCell className="py-3 px-4">
                       <div className="flex items-center space-x-2">
                         <span className="font-medium text-slate-900 text-sm">
-                          {link.productName}
+                          {link.name}
                         </span>
                         <Badge
                           variant="secondary"
@@ -198,7 +180,7 @@ export default function PaymentLinks() {
                       </div>
                     </TableCell>
                     <TableCell className="py-3 px-4 text-xs text-slate-600">
-                      {link.priceType === "fixed"
+                      {link.priceType === "FIXED"
                         ? `RON ${Number(link.amount ?? 0).toFixed(2)}`
                         : "Clientul alege"}
                     </TableCell>
@@ -238,9 +220,7 @@ export default function PaymentLinks() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="flex items-center text-xs py-2"
-                            onSelect={() =>
-                              startRename(link.id, link.productName)
-                            }
+                            onSelect={() => startRename(link.id, link.name)}
                           >
                             <Edit className="mr-2 h-3.5 w-3.5" />
                             Schimbă numele
@@ -254,14 +234,14 @@ export default function PaymentLinks() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="flex items-center text-xs py-2"
-                            onSelect={() => onToggleActive()}
+                            onSelect={() => onToggleActive(link)}
                           >
                             <Trash2 className="mr-2 h-3.5 w-3.5" />
                             {link.active ? "Dezactivează" : "Activează"}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="flex items-center text-red-600 text-xs py-2"
-                            onSelect={() => onDelete()}
+                            onSelect={() => onDelete(link)}
                           >
                             <Trash2 className="mr-2 h-3.5 w-3.5" />
                             Șterge definitiv
@@ -282,9 +262,9 @@ export default function PaymentLinks() {
         onClose={async () => {
           setShowCreateModal(false);
         }}
+        onCreated={async () => refresh()}
       />
 
-      {/* Rename Dialog */}
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
         <DialogContent>
           <DialogHeader>
