@@ -10,7 +10,7 @@ import {
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PayWidget from "./PayWidget";
-
+export const runtime = "edge";
 // Minimal type aligned with web/src/api/paylinks.ts PayLink
 type PayLink = {
   id: string;
@@ -288,14 +288,7 @@ export default async function PublicPayLinkPage({
                   </div>
                 )}
 
-                {collectEmail && (
-                  <div>
-                    <Label className="text-xs text-gray-600">
-                      Adresa de email
-                    </Label>
-                    <Input placeholder="nume@exemplu.com" className="mt-1" />
-                  </div>
-                )}
+                {/* Email is collected inside PayWidget when required */}
 
                 {collectPhone && (
                   <div>
@@ -315,6 +308,7 @@ export default async function PublicPayLinkPage({
                       slug={params.slug}
                       priceType={priceType}
                       minAmount={minAmount}
+                      requireEmail={collectEmail}
                     />
                   </div>
                 </div>

@@ -166,6 +166,86 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
         });
         break;
       }
+      case "charge.succeeded": {
+        const charge = event.data.object as any;
+        const paylinkId = charge?.metadata?.paylinkId as string | undefined;
+        const amountMinor = (charge?.amount as number) ?? 0;
+        const recipient =
+          (charge?.billing_details?.email as string | undefined) ||
+          (charge?.receipt_email as string | undefined) ||
+          null;
+        if (!paylinkId || !recipient) break;
+
+        const link = await prisma.payLink.findUnique({
+          where: { id: paylinkId },
+          select: {
+            id: true,
+            name: true,
+            serviceType: true,
+            product: { select: { assets: true, name: true } },
+          },
+        });
+        if (!link) break;
+
+        let extraHtml = "";
+        if (link.serviceType === "DIGITAL_PRODUCT") {
+          const raw = link.product?.assets as any;
+          const items: { key: string; name?: string }[] = [];
+          if (Array.isArray(raw)) {
+            for (const it of raw) {
+              if (typeof it === "string") items.push({ key: it });
+              else if (it && typeof it === "object") {
+                if (typeof it.key === "string")
+                  items.push({ key: it.key, name: (it as any).name });
+                else if (typeof (it as any).r2Key === "string")
+                  items.push({
+                    key: (it as any).r2Key,
+                    name: (it as any).name,
+                  });
+              }
+            }
+          }
+          if (items.length) {
+            const links = await Promise.all(
+              items.map(async (it) => ({
+                url: await presignGetUrl({
+                  key: it.key,
+                  expiresInSeconds: 60 * 60 * 24,
+                }),
+                name: it.name || it.key.split("/").pop() || "Download",
+              }))
+            );
+            extraHtml = `
+              <p>Your downloads (valid for 24 hours):</p>
+              <ul>
+                ${links
+                  .map((l) => `<li><a href="${l.url}">${l.name}</a></li>`)
+                  .join("")}
+              </ul>
+            `;
+          }
+        }
+
+        const subject = `Payment received — ${link.name}`;
+        const amountRON = (amountMinor / 100).toFixed(2);
+        const html = `
+          <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+            <h2>Thank you!</h2>
+            <p>We received your payment of <strong>${amountRON} RON</strong> for <strong>${link.name}</strong>.</p>
+            ${extraHtml}
+            <p style="color:#64748b; font-size: 12px; margin-top: 24px;">If you have questions, just reply to this email.</p>
+          </div>
+        `;
+        try {
+          await sendMail({ to: recipient, subject, html });
+        } catch (err) {
+          logger.warn(
+            { err, recipient },
+            "Failed to send confirmation email (charge)"
+          );
+        }
+        break;
+      }
       default:
         // ignore
         break;

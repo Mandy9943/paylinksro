@@ -21,7 +21,7 @@ async function fetchPK(): Promise<string> {
   return json.publishableKey as string;
 }
 
-async function createPublicPI(slug: string, amount?: number) {
+async function createPublicPI(slug: string, amount?: number, email?: string) {
   const res = await fetch(
     `${API_BASE}/v1/paylinks/public/${encodeURIComponent(
       slug
@@ -29,7 +29,7 @@ async function createPublicPI(slug: string, amount?: number) {
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify({ amount, email }),
     }
   );
   const json = await res.json();
@@ -43,24 +43,31 @@ function StartForm({
   requiresAmount,
   slug,
   minAmount,
+  requireEmail,
 }: {
   setClientSecret: (v: string) => void;
   requiresAmount: boolean;
   slug: string;
   minAmount?: number | null;
+  requireEmail?: boolean;
 }) {
   const [amount, setAmount] = useState<string>(
     minAmount ? String(minAmount) : ""
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState<string>("");
 
   const handleCreatePI = async () => {
     try {
       setLoading(true);
       setError(null);
       const val = requiresAmount ? parseFloat(amount || "0") : undefined;
-      const cs = await createPublicPI(slug, val);
+      const cs = await createPublicPI(
+        slug,
+        val,
+        requireEmail ? email || undefined : undefined
+      );
       setClientSecret(cs);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Cannot create payment";
@@ -85,6 +92,19 @@ function StartForm({
                 ? `Minim ${minAmount}`
                 : "Introduceți suma"
             }
+            className="mt-1"
+          />
+        </div>
+      )}
+
+      {requireEmail && (
+        <div>
+          <Label className="text-xs text-gray-600">Adresa de email</Label>
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="nume@exemplu.com"
             className="mt-1"
           />
         </div>
@@ -168,10 +188,12 @@ export default function PayWidget({
   slug,
   priceType,
   minAmount,
+  requireEmail,
 }: {
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
   minAmount?: number | null;
+  requireEmail?: boolean;
 }) {
   const requiresAmount = priceType === "FLEXIBLE";
   const [pk, setPk] = useState<string | null>(null);
@@ -188,7 +210,7 @@ export default function PayWidget({
         setPk(key);
         // Initialize Stripe for the platform account (destination charges used server-side)
         setStripePromise(loadStripe(key));
-        if (!requiresAmount) {
+        if (!requiresAmount && !requireEmail) {
           // Fixed-price: create PI immediately
           const cs = await createPublicPI(slug);
           if (!ignore) setClientSecret(cs);
@@ -200,7 +222,7 @@ export default function PayWidget({
     return () => {
       ignore = true;
     };
-  }, [slug, requiresAmount]);
+  }, [slug, requiresAmount, requireEmail]);
 
   const elementsOptions = useMemo(
     () => ({ clientSecret: clientSecret || undefined }),
@@ -215,6 +237,7 @@ export default function PayWidget({
         requiresAmount={requiresAmount}
         slug={slug}
         minAmount={minAmount}
+        requireEmail={requireEmail}
       />
     );
   }
