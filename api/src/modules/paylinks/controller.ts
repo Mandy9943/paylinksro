@@ -1,6 +1,9 @@
 import { type NextFunction, type Response } from "express";
+import { prisma } from "../../lib/prisma.js";
+import { getStripe } from "../../lib/stripe.js";
 import {
   createPayLinkSchema,
+  createPublicPaymentIntentSchema,
   listQuerySchema,
   updatePayLinkSchema,
 } from "./schemas.js";
@@ -145,10 +148,16 @@ export async function publicGetBySlugCtrl(
     if (!p || !p.active) {
       return res.status(404).json({ error: { message: "Not found" } });
     }
+    // Get seller's connected account id so clients can initialize Stripe.js
+    const owner = await prisma.user.findUnique({
+      where: { id: p.userId },
+      select: { stripeAccountId: true },
+    });
     res.json({
       ...p,
       amount: toRON(p.amount),
       minAmount: toRON((p as any).minAmount),
+      sellerStripeAccountId: owner?.stripeAccountId ?? null,
       fundraising: p.fundraising
         ? {
             ...p.fundraising,
@@ -157,6 +166,65 @@ export async function publicGetBySlugCtrl(
           }
         : null,
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function publicCreatePaymentIntentCtrl(
+  req: any,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { slug } = req.params as { slug: string };
+    const body = createPublicPaymentIntentSchema.parse(
+      req.validated?.body ?? req.body
+    );
+    const link: any = await findPublicPayLinkBySlug(slug);
+    if (!link || !link.active) {
+      return res.status(404).json({ error: { message: "Not found" } });
+    }
+    const owner = await prisma.user.findUnique({
+      where: { id: link.userId },
+      select: { stripeAccountId: true },
+    });
+    const accountId = (owner as any)?.stripeAccountId as string | undefined;
+    if (!accountId) {
+      return res
+        .status(400)
+        .json({ error: { message: "Seller not onboarded" } });
+    }
+    const stripe = getStripe();
+    const currency = (link.currency as string)?.toLowerCase() || "ron";
+    let amountMinor: number | null = null;
+    if (link.priceType === "FIXED") {
+      amountMinor = link.amount as number; // in minor units
+    } else {
+      if (typeof body.amount !== "number") {
+        return res.status(400).json({ error: { message: "Missing amount" } });
+      }
+      amountMinor = Math.max(0, Math.round((body.amount as number) * 100));
+      const minMinor = (link.minAmount as number) ?? 0;
+      if (minMinor && amountMinor < minMinor) {
+        return res
+          .status(400)
+          .json({ error: { message: "Amount below minimum" } });
+      }
+    }
+    const applicationFeeAmount = Math.floor((amountMinor ?? 0) * 0.1);
+    // Create a destination charge on the platform account and transfer funds to the seller
+    const intent = await stripe.paymentIntents.create({
+      amount: amountMinor!,
+      currency,
+      receipt_email: body.email,
+      automatic_payment_methods: { enabled: true },
+      application_fee_amount: applicationFeeAmount,
+      transfer_data: { destination: accountId },
+      on_behalf_of: accountId,
+      metadata: { paylinkId: link.id, slug: link.slug },
+    });
+    res.json({ client_secret: intent.client_secret });
   } catch (err) {
     next(err);
   }

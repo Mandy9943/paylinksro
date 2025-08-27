@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import PayWidget from "./PayWidget";
 
 // Minimal type aligned with web/src/api/paylinks.ts PayLink
 type PayLink = {
@@ -27,6 +27,7 @@ type PayLink = {
   collectPhone: boolean;
   collectBillingAddress?: boolean | null;
   mainColor?: string | null;
+  sellerStripeAccountId?: string | null;
   service?: {
     title: string;
     description?: string | null;
@@ -309,29 +310,12 @@ export default async function PublicPayLinkPage({
                   <Label className="text-xs text-gray-600">
                     Metodă de plată
                   </Label>
-                  <div className="mt-1 p-3 border rounded-md bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Informații card</span>
-                      <div className="flex space-x-1">
-                        <div className="w-6 h-4 bg-blue-600 rounded" />
-                        <div className="w-6 h-4 bg-red-500 rounded" />
-                        <div className="w-6 h-4 bg-yellow-500 rounded" />
-                      </div>
-                    </div>
-                    <Input
-                      placeholder="1234 1234 1234 1234"
-                      className="mt-2 text-sm border-0 bg-transparent p-0"
+                  <div className="mt-2">
+                    <PayWidget
+                      slug={params.slug}
+                      priceType={priceType}
+                      minAmount={minAmount}
                     />
-                    <div className="flex space-x-2 mt-2">
-                      <Input
-                        placeholder="MM / YY"
-                        className="text-sm border-0 bg-transparent p-0 flex-1"
-                      />
-                      <Input
-                        placeholder="CVC"
-                        className="text-sm border-0 bg-transparent p-0 w-16"
-                      />
-                    </div>
                   </div>
                 </div>
 
@@ -368,13 +352,7 @@ export default async function PublicPayLinkPage({
                   </div>
                 )}
 
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-6">
-                  {type === "fundraising"
-                    ? "Donează acum"
-                    : priceType === "FIXED"
-                    ? `Plătește ${((amount ?? 0) * 1.21).toFixed(2)} RON acum`
-                    : "Plătește + 21% tax acum"}
-                </Button>
+                {/* The PayWidget contains the pay button */}
 
                 <div className="text-xs text-center text-gray-500 mt-4">
                   Powered by PayLink • Termeni • Confidențialitate

@@ -58,5 +58,13 @@ export const listQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(50).optional(),
 });
 
+export const createPublicPaymentIntentSchema = z.object({
+  amount: z.coerce.number().positive().optional(), // RON; required for FLEXIBLE/DONATION/FUNDRAISING
+  email: z.string().email().optional(),
+});
+
 export type CreatePayLinkInput = z.infer<typeof createPayLinkSchema>;
 export type UpdatePayLinkInput = z.infer<typeof updatePayLinkSchema>;
+export type CreatePublicPaymentIntentInput = z.infer<
+  typeof createPublicPaymentIntentSchema
+>;

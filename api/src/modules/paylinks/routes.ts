@@ -5,6 +5,7 @@ import {
   createCtrl,
   deleteCtrl,
   listCtrl,
+  publicCreatePaymentIntentCtrl,
   publicGetBySlugCtrl,
   updateCtrl,
 } from "./controller.js";
@@ -14,6 +15,10 @@ export const payLinksRouter = Router();
 
 // Public endpoint to fetch by slug
 payLinksRouter.get("/public/:slug", publicGetBySlugCtrl);
+payLinksRouter.post(
+  "/public/:slug/payment-intents",
+  publicCreatePaymentIntentCtrl
+);
 
 payLinksRouter.use(requireAuth);
 

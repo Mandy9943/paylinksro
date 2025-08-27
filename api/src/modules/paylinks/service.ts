@@ -228,6 +228,7 @@ export async function findPublicPayLinkBySlug(slug: string) {
   return prisma.payLink.findFirst({
     where: { slug },
     select: {
+      userId: true,
       id: true,
       name: true,
       slug: true,
