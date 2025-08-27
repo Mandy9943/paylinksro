@@ -26,7 +26,18 @@ export async function listCtrl(req: any, res: Response, next: NextFunction) {
     const { cursor, limit } = listQuerySchema.parse(req.query);
     const items = await listPayLinks(req.user.id, limit ?? 50, cursor);
     res.json({
-      items: items.map((p: any) => ({ ...p, amount: toRON(p.amount) })),
+      items: items.map((p: any) => ({
+        ...p,
+        amount: toRON(p.amount),
+        minAmount: toRON((p as any).minAmount),
+        fundraising: p.fundraising
+          ? {
+              ...p.fundraising,
+              targetAmount: toRON(p.fundraising.targetAmount),
+              currentRaised: toRON(p.fundraising.currentRaised),
+            }
+          : null,
+      })),
     });
   } catch (err) {
     next(err);
@@ -42,8 +53,31 @@ export async function createCtrl(req: any, res: Response, next: NextFunction) {
         parsed.priceType === "FIXED"
           ? toBani(parsed.amount ?? null)
           : undefined,
+      minAmount:
+        parsed.priceType === "FLEXIBLE"
+          ? toBani((parsed as any).minAmount ?? null)
+          : undefined,
+      fundraising: parsed.fundraising
+        ? {
+            ...parsed.fundraising,
+            targetAmount: toBani(
+              parsed.fundraising.targetAmount ?? null
+            ) as any,
+          }
+        : undefined,
     } as any);
-    res.status(201).json({ ...created, amount: toRON(created.amount) });
+    res.status(201).json({
+      ...created,
+      amount: toRON(created.amount),
+      minAmount: toRON((created as any).minAmount),
+      fundraising: created.fundraising
+        ? {
+            ...created.fundraising,
+            targetAmount: toRON(created.fundraising.targetAmount),
+            currentRaised: toRON(created.fundraising.currentRaised),
+          }
+        : null,
+    });
   } catch (err) {
     next(err);
   }
@@ -59,8 +93,31 @@ export async function updateCtrl(req: any, res: Response, next: NextFunction) {
         parsed.priceType === "FIXED"
           ? toBani((parsed as any).amount ?? null)
           : undefined,
+      minAmount:
+        parsed.priceType === "FLEXIBLE"
+          ? toBani((parsed as any).minAmount ?? null)
+          : undefined,
+      fundraising: parsed.fundraising
+        ? {
+            ...parsed.fundraising,
+            targetAmount: toBani(
+              parsed.fundraising.targetAmount ?? null
+            ) as any,
+          }
+        : undefined,
     } as any);
-    res.json({ ...updated, amount: toRON(updated.amount) });
+    res.json({
+      ...updated,
+      amount: toRON(updated.amount),
+      minAmount: toRON((updated as any).minAmount),
+      fundraising: updated.fundraising
+        ? {
+            ...updated.fundraising,
+            targetAmount: toRON(updated.fundraising.targetAmount),
+            currentRaised: toRON(updated.fundraising.currentRaised),
+          }
+        : null,
+    });
   } catch (err) {
     next(err);
   }

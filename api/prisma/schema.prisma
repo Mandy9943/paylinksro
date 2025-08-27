@@ -62,26 +62,29 @@ enum Role {
 // ---------------------------
 
 model PayLink {
-    id           String      @id @default(cuid())
-    userId       String
-    user         User        @relation(fields: [userId], references: [id])
-    name         String
-    slug         String
-    priceType    PriceType
-    amount       Int? // in minor units (bani) when priceType == FIXED
-    currency     String      @default("RON")
-    active       Boolean     @default(true)
-    serviceType  ServiceType @default(SERVICE)
-    description  String?
-    collectEmail Boolean     @default(true)
-    collectPhone Boolean     @default(false)
-    mainColor    String? // hex color like #fbbf24
-    createdAt    DateTime    @default(now())
-    updatedAt    DateTime    @updatedAt
+    id                    String      @id @default(cuid())
+    userId                String
+    user                  User        @relation(fields: [userId], references: [id])
+    name                  String
+    slug                  String
+    priceType             PriceType
+    amount                Int? // in minor units (bani) when priceType == FIXED
+    minAmount             Int? // in minor units (bani) when priceType == FLEXIBLE
+    currency              String      @default("RON")
+    active                Boolean     @default(true)
+    serviceType           ServiceType @default(SERVICE)
+    description           String?
+    collectEmail          Boolean     @default(true)
+    collectPhone          Boolean     @default(false)
+    collectBillingAddress Boolean     @default(false)
+    mainColor             String? // hex color like #fbbf24
+    createdAt             DateTime    @default(now())
+    updatedAt             DateTime    @updatedAt
 
     // Optional 1-1 metadata depending on serviceType
-    service ServiceItem?
-    product DigitalProduct?
+    service     ServiceItem?
+    product     DigitalProduct?
+    fundraising FundraisingCampaign?
 
     @@unique([userId, slug])
     @@index([userId, createdAt])
@@ -96,15 +99,17 @@ enum ServiceType {
     SERVICE
     DIGITAL_PRODUCT
     DONATION
+    FUNDRAISING
 }
 
 // Detailed info for service-type links
 model ServiceItem {
-    id          String  @id @default(cuid())
-    payLinkId   String  @unique
-    payLink     PayLink @relation(fields: [payLinkId], references: [id])
-    title       String
-    description String?
+    id            String  @id @default(cuid())
+    payLinkId     String  @unique
+    payLink       PayLink @relation(fields: [payLinkId], references: [id])
+    title         String
+    description   String?
+    coverImageUrl String?
     // later: images, delivery terms, etc.
 }
 
@@ -116,5 +121,15 @@ model DigitalProduct {
     name          String
     description   String?
     assets        Json?
+    coverImageUrl String?
+}
+
+// Fundraising campaign details
+model FundraisingCampaign {
+    id            String  @id @default(cuid())
+    payLinkId     String  @unique
+    payLink       PayLink @relation(fields: [payLinkId], references: [id])
+    targetAmount  Int?
+    currentRaised Int?    @default(0)
     coverImageUrl String?
 }

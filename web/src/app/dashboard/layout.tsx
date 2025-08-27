@@ -1,22 +1,24 @@
 "use client";
-import CreatePaymentLinkModal from "@/components/dashboard/create-payment-link-modal";
+import CreatePaymentLinkModal from "@/components/dashboard/CreatePaymentLinkModal/create-payment-link-modal";
 import Sidebar from "@/components/dashboard/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useStripeAccount } from "@/hooks/useStripeAccount";
 import { captureTokenFromHash } from "@/lib/api";
+import useUiStore from "@/store/ui-store";
 import { Loader, Menu, Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 
 const Layout = ({ children }: { children: ReactNode }) => {
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { isLoading: isStripeLoading } = useStripeAccount();
   const [bootstrapped, setBootstrapped] = useState(false);
+  const { openCreatePaymentLinkModal, toggleCreatePaymentLinkModal } =
+    useUiStore();
 
   // Ensure we capture token from URL fragment before auth check
   useEffect(() => {
@@ -106,7 +108,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
               <Button
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm px-3 py-1.5 h-8 text-sm font-medium rounded-lg border-0 transition-all duration-200 hover:shadow-md disabled:opacity-60"
-                onClick={() => setShowCreateModal(true)}
+                onClick={() => toggleCreatePaymentLinkModal()}
                 disabled={false}
               >
                 <Plus className="h-3.5 w-3.5 mr-1.5" />
@@ -127,8 +129,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
       </div>
 
       <CreatePaymentLinkModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        isOpen={openCreatePaymentLinkModal}
+        onClose={toggleCreatePaymentLinkModal}
       />
     </div>
   );

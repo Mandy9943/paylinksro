@@ -32,14 +32,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { usePayLinks } from "@/hooks/usePayLinks";
+import useUiStore from "@/store/ui-store";
 import { Copy, Edit, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import CreatePaymentLinkModal from "./create-payment-link-modal";
 
 export default function PaymentLinks() {
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const { toggleCreatePaymentLinkModal } = useUiStore();
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [renameId, setRenameId] = useState<string | null>(null);
@@ -126,7 +126,7 @@ export default function PaymentLinks() {
           </h2>
         </div>
         <Button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => toggleCreatePaymentLinkModal()}
           size="sm"
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
@@ -256,14 +256,6 @@ export default function PaymentLinks() {
           )}
         </CardContent>
       </Card>
-
-      <CreatePaymentLinkModal
-        isOpen={showCreateModal}
-        onClose={async () => {
-          setShowCreateModal(false);
-        }}
-        onCreated={async () => refresh()}
-      />
 
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
         <DialogContent>

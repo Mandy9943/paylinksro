@@ -17,22 +17,39 @@ export async function listPayLinks(
       slug: true,
       priceType: true,
       amount: true,
+      minAmount: true,
       currency: true,
       active: true,
       serviceType: true,
       description: true,
       collectEmail: true,
       collectPhone: true,
+      collectBillingAddress: true,
       mainColor: true,
       createdAt: true,
       updatedAt: true,
-      service: { select: { id: true, title: true, description: true } },
+      service: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          coverImageUrl: true,
+        },
+      },
       product: {
         select: {
           id: true,
           name: true,
           description: true,
           assets: true,
+          coverImageUrl: true,
+        },
+      },
+      fundraising: {
+        select: {
+          id: true,
+          targetAmount: true,
+          currentRaised: true,
           coverImageUrl: true,
         },
       },
@@ -47,12 +64,15 @@ export async function createPayLink(userId: string, data: CreatePayLinkInput) {
     slug: data.slug,
     priceType: data.priceType,
     amount: data.priceType === "FIXED" ? data.amount ?? 0 : null,
+    minAmount:
+      data.priceType === "FLEXIBLE" ? (data as any).minAmount ?? null : null,
     currency: data.currency ?? "RON",
     active: data.active ?? true,
     serviceType: data.serviceType,
     description: data.description,
     collectEmail: data.collectEmail ?? true,
     collectPhone: data.collectPhone ?? false,
+    collectBillingAddress: data.collectBillingAddress ?? false,
     mainColor: data.mainColor,
   } as const;
 
@@ -65,6 +85,7 @@ export async function createPayLink(userId: string, data: CreatePayLinkInput) {
               create: {
                 title: data.service.title,
                 description: data.service.description,
+                coverImageUrl: (data as any).service.coverImageUrl,
               },
             },
           }
@@ -81,8 +102,18 @@ export async function createPayLink(userId: string, data: CreatePayLinkInput) {
             },
           }
         : {}),
+      ...(data.serviceType === "FUNDRAISING" && data.fundraising
+        ? {
+            fundraising: {
+              create: {
+                targetAmount: (data.fundraising.targetAmount as any) ?? null,
+                coverImageUrl: data.fundraising.coverImageUrl,
+              },
+            },
+          }
+        : {}),
     },
-    include: { service: true, product: true },
+    include: { service: true, product: true, fundraising: true },
   });
 }
 
@@ -94,7 +125,7 @@ export async function updatePayLink(
   // Ensure ownership
   const existing = await prisma.payLink.findUnique({
     where: { id },
-    include: { service: true, product: true },
+    include: { service: true, product: true, fundraising: true },
   });
   if (!existing || existing.userId !== userId) {
     const e: any = new Error("Not found");
@@ -106,6 +137,10 @@ export async function updatePayLink(
   if (data.priceType) {
     next.amount =
       data.priceType === "FIXED" ? data.amount ?? existing.amount ?? 0 : null;
+    next.minAmount =
+      data.priceType === "FLEXIBLE"
+        ? (data as any).minAmount ?? existing.minAmount ?? null
+        : null;
   }
   if (typeof data.currency === "undefined") delete next.currency;
   return prisma.payLink.update({
@@ -119,12 +154,15 @@ export async function updatePayLink(
                   update: {
                     title: data.service.title ?? undefined,
                     description: data.service.description,
+                    coverImageUrl:
+                      (data as any).service.coverImageUrl ?? undefined,
                   },
                 }
               : {
                   create: {
                     title: data.service.title!,
                     description: data.service.description,
+                    coverImageUrl: (data as any).service.coverImageUrl,
                   },
                 },
           }
@@ -150,8 +188,27 @@ export async function updatePayLink(
                 },
           }
         : {}),
+      ...(data.fundraising
+        ? {
+            fundraising: existing.fundraising
+              ? {
+                  update: {
+                    targetAmount:
+                      (data.fundraising.targetAmount as any) ?? undefined,
+                    coverImageUrl: data.fundraising.coverImageUrl ?? undefined,
+                  },
+                }
+              : {
+                  create: {
+                    targetAmount:
+                      (data.fundraising.targetAmount as any) ?? null,
+                    coverImageUrl: data.fundraising.coverImageUrl,
+                  },
+                },
+          }
+        : {}),
     },
-    include: { service: true, product: true },
+    include: { service: true, product: true, fundraising: true },
   });
 }
 

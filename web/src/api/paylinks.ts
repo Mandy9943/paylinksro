@@ -6,13 +6,26 @@ export type PayLink = {
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
   amount?: number | null; // RON
+  minAmount?: number | null; // RON
   currency: string;
   active: boolean;
-  serviceType: "SERVICE" | "DIGITAL_PRODUCT" | "DONATION";
+  serviceType: "SERVICE" | "DIGITAL_PRODUCT" | "DONATION" | "FUNDRAISING";
   description?: string | null;
   collectEmail: boolean;
   collectPhone: boolean;
   mainColor?: string | null;
+  service?: {
+    id: string;
+    title: string;
+    description?: string | null;
+    coverImageUrl?: string | null;
+  } | null;
+  fundraising?: {
+    id: string;
+    targetAmount?: number | null;
+    currentRaised?: number | null;
+    coverImageUrl?: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -27,16 +40,22 @@ export async function createPayLink(input: {
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
   amount?: number; // RON
-  serviceType: "SERVICE" | "DIGITAL_PRODUCT" | "DONATION";
+  minAmount?: number; // RON
+  serviceType: "SERVICE" | "DIGITAL_PRODUCT" | "DONATION" | "FUNDRAISING";
   description?: string;
   collectEmail?: boolean;
   collectPhone?: boolean;
+  collectBillingAddress?: boolean;
   mainColor?: string;
-  service?: { title: string; description?: string };
+  service?: { title: string; description?: string; coverImageUrl?: string };
   product?: {
     name: string;
     description?: string;
     assets?: unknown;
+    coverImageUrl?: string;
+  };
+  fundraising?: {
+    targetAmount?: number;
     coverImageUrl?: string;
   };
 }) {
