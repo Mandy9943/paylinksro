@@ -7,6 +7,7 @@ import {
 import {
   createPayLink,
   deletePayLink,
+  findPublicPayLinkBySlug,
   listPayLinks,
   updatePayLink,
 } from "./service.js";
@@ -128,6 +129,34 @@ export async function deleteCtrl(req: any, res: Response, next: NextFunction) {
     const { id } = req.params;
     const result = await deletePayLink(req.user.id, id);
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function publicGetBySlugCtrl(
+  req: any,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { slug } = req.params as { slug: string };
+    const p: any = await findPublicPayLinkBySlug(slug);
+    if (!p || !p.active) {
+      return res.status(404).json({ error: { message: "Not found" } });
+    }
+    res.json({
+      ...p,
+      amount: toRON(p.amount),
+      minAmount: toRON((p as any).minAmount),
+      fundraising: p.fundraising
+        ? {
+            ...p.fundraising,
+            targetAmount: toRON(p.fundraising.targetAmount),
+            currentRaised: toRON(p.fundraising.currentRaised),
+          }
+        : null,
+    });
   } catch (err) {
     next(err);
   }

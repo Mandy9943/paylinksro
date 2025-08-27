@@ -223,3 +223,52 @@ export async function deletePayLink(userId: string, id: string) {
   await prisma.payLink.delete({ where: { id } });
   return { ok: true };
 }
+
+export async function findPublicPayLinkBySlug(slug: string) {
+  return prisma.payLink.findFirst({
+    where: { slug },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      priceType: true,
+      amount: true,
+      minAmount: true,
+      currency: true,
+      active: true,
+      serviceType: true,
+      description: true,
+      collectEmail: true,
+      collectPhone: true,
+      collectBillingAddress: true,
+      mainColor: true,
+      createdAt: true,
+      updatedAt: true,
+      service: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          coverImageUrl: true,
+        },
+      },
+      product: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          assets: false,
+          coverImageUrl: true,
+        },
+      },
+      fundraising: {
+        select: {
+          id: true,
+          targetAmount: true,
+          currentRaised: true,
+          coverImageUrl: true,
+        },
+      },
+    },
+  });
+}

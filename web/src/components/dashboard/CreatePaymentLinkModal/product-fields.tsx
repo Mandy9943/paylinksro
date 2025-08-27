@@ -8,14 +8,14 @@ import {
   FileText,
   Image as ImageIcon,
   Info,
+  Loader2,
   Plus,
   Upload,
   X,
-  Loader2,
 } from "lucide-react";
 import Image from "next/image";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useRef, useState } from "react";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import type { CreatePaymentLinkFormValues } from "./types";
 
 export function ProductFields() {
@@ -66,7 +66,9 @@ export function ProductFields() {
           })
       );
       const uploadedKeys = results
-        .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+        .filter(
+          (r): r is PromiseFulfilledResult<string> => r.status === "fulfilled"
+        )
         .map((r) => r.value);
       if (uploadedKeys.length) {
         setValue("productAssetUrls", [...productAssetUrls, ...uploadedKeys]);
@@ -269,12 +271,14 @@ export function ProductFields() {
                 </Button>
               </p>
               <p className="text-xs text-gray-500">
-                Acceptă: imagini, PDF, ZIP, DOC/DOCX, MP3/WAV, MP4 · poți selecta multiple fișiere (max ~50MB fiecare)
+                Acceptă: imagini, PDF, ZIP, DOC/DOCX, MP3/WAV, MP4 · poți
+                selecta multiple fișiere (max ~50MB fiecare)
               </p>
 
               {uploading && (
                 <div className="mt-3 flex items-center justify-center text-sm text-gray-600">
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Se încarcă fișierele...
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Se încarcă
+                  fișierele...
                 </div>
               )}
 
