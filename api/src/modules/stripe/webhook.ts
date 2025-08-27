@@ -103,6 +103,8 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
       }
       case "charge.succeeded": {
         const charge = event.data.object as any;
+        console.log(charge);
+
         let paylinkId = charge?.metadata?.paylinkId as string | undefined;
         const amountMinor = (charge?.amount as number) ?? 0;
         const recipient =
