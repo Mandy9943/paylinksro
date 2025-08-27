@@ -15,6 +15,7 @@ const EnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string(),
   STRIPE_PUBLISHABLE_KEY: z.string(),
   STRIPE_WEBHOOK_SECRET: z.string(),
+  STRIPE_WEBHOOK_SECRET_CONNECTED: z.string(),
   // Resend email
   RESEND_API_KEY: z.string(),
   MAIL_FROM: z.string().default("PayLinks <salut@paylinks.ro>"),

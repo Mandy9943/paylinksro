@@ -28,8 +28,16 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
       env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err: any) {
-    logger.warn({ err }, "Invalid Stripe signature");
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        env.STRIPE_WEBHOOK_SECRET_CONNECTED
+      );
+    } catch (error) {
+      logger.warn({ err }, "Invalid Stripe signature");
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
   }
 
   try {
