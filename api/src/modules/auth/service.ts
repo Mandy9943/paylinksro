@@ -16,7 +16,9 @@ export async function requestMagicLink(email: string, redirectTo?: string) {
     where: { email: normalizedEmail },
   });
   if (!user) {
-    user = await prisma.user.create({ data: { email: normalizedEmail } });
+    user = await prisma.user.create({
+      data: { email: normalizedEmail, active: false },
+    });
   }
 
   // Generate token and store hash
@@ -85,8 +87,11 @@ export async function verifyMagicLink(token: string) {
     data: { usedAt: new Date() },
   });
 
-  // Load user to embed current token version in JWT
-  const user = await prisma.user.findUnique({ where: { id: record.userId } });
+  const user = await prisma.user.update({
+    where: { id: record.userId },
+    data: { active: true },
+  });
+
   if (!user) throw Object.assign(new Error("User not found"), { status: 404 });
 
   // Create session (simple JWT-based session for API usage)

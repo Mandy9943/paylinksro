@@ -27,6 +27,7 @@ model User {
     payLinks                PayLink[]
     customers               Customer[]
     transactions            Transaction[]
+    active                  Boolean          @default(true)
 }
 
 model MagicLinkToken {
