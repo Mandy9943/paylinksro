@@ -21,6 +21,7 @@ type PayLink = {
   collectBillingAddress?: boolean | null;
   mainColor?: string | null;
   sellerStripeAccountId?: string | null;
+  sellerOnboarded?: boolean;
   service?: {
     title: string;
     description?: string | null;
@@ -88,6 +89,7 @@ export default async function PublicPayLinkPage({
   const slug = (await params).slug;
   const data = await fetchPayLink(slug);
   if (!data) notFound();
+  const sellerOnboarded = !!data.sellerOnboarded;
 
   const mainColor = data.mainColor || "#fbbf24";
   const priceType = data.priceType || "FIXED";
@@ -262,6 +264,12 @@ export default async function PublicPayLinkPage({
 
             <div className="md:w-1/2 p-6">
               <div className="space-y-4">
+                {!sellerOnboarded && (
+                  <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-sm px-3 py-2">
+                    Momentan acest comerciant nu poate accepta plăți. Revino mai
+                    târziu.
+                  </div>
+                )}
                 {priceType === "FLEXIBLE" && (
                   <div>
                     <Label className="text-xs text-gray-600">
@@ -276,25 +284,32 @@ export default async function PublicPayLinkPage({
                           : "Introduceți suma"
                       }
                       className="mt-1"
+                      disabled={!sellerOnboarded}
                     />
                   </div>
                 )}
 
                 {/* Email is collected inside PayWidget when required */}
 
-                <div>
+                <div aria-disabled={!sellerOnboarded}>
                   <Label className="text-xs text-gray-600">
                     Metodă de plată
                   </Label>
                   <div className="mt-2">
-                    <PayWidget
-                      slug={slug}
-                      priceType={priceType}
-                      minAmount={minAmount}
-                      requireEmail={collectEmail}
-                      requirePhone={collectPhone}
-                      requireBilling={collectBillingAddress}
-                    />
+                    {sellerOnboarded ? (
+                      <PayWidget
+                        slug={slug}
+                        priceType={priceType}
+                        minAmount={minAmount}
+                        requireEmail={collectEmail}
+                        requirePhone={collectPhone}
+                        requireBilling={collectBillingAddress}
+                      />
+                    ) : (
+                      <div className="h-24 flex items-center justify-center rounded-md border border-dashed border-amber-300 bg-amber-50 text-amber-900 text-sm">
+                        Plățile nu sunt disponibile pentru acest link momentan.
+                      </div>
+                    )}
                   </div>
                 </div>
 

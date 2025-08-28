@@ -69,10 +69,7 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
-      {/* Stripe embedded components */}
-      {/* <CreateProduct /> */}
-      <EmbeddedOnboarding />
-      <EmbeddedManagement />
+      {isOnboarded ? <EmbeddedManagement /> : <EmbeddedOnboarding />}
     </div>
   );
 }

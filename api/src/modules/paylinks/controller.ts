@@ -151,13 +151,14 @@ export async function publicGetBySlugCtrl(
     // Get seller's connected account id so clients can initialize Stripe.js
     const owner = await prisma.user.findUnique({
       where: { id: p.userId },
-      select: { stripeAccountId: true },
+      select: { stripeAccountId: true, onboardedAt: true },
     });
     res.json({
       ...p,
       amount: toRON(p.amount),
       minAmount: toRON((p as any).minAmount),
       sellerStripeAccountId: owner?.stripeAccountId ?? null,
+      sellerOnboarded: owner?.onboardedAt ? true : false,
       fundraising: p.fundraising
         ? {
             ...p.fundraising,
@@ -187,10 +188,11 @@ export async function publicCreatePaymentIntentCtrl(
     }
     const owner = await prisma.user.findUnique({
       where: { id: link.userId },
-      select: { stripeAccountId: true },
+      select: { stripeAccountId: true, onboardedAt: true },
     });
     const accountId = (owner as any)?.stripeAccountId as string | undefined;
-    if (!accountId) {
+    const onboarded = !!(owner as any)?.onboardedAt;
+    if (!accountId || !onboarded) {
       return res
         .status(400)
         .json({ error: { message: "Seller not onboarded" } });
