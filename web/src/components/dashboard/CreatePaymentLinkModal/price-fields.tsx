@@ -58,7 +58,7 @@ export function PriceFields() {
           <Controller
             name="amount"
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <div>
                 <Label
                   htmlFor="amount"
@@ -73,12 +73,18 @@ export function PriceFields() {
                   placeholder="0.00"
                   className="w-full mt-1"
                   value={field.value ?? ""}
+                  aria-invalid={!!fieldState.error}
                   onChange={(e) =>
                     field.onChange(
                       e.target.value === "" ? null : Number(e.target.value)
                     )
                   }
                 />
+                {fieldState.error && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {fieldState.error.message}
+                  </p>
+                )}
               </div>
             )}
           />
@@ -88,7 +94,7 @@ export function PriceFields() {
           <Controller
             name="minAmount"
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <div>
                 <Label
                   htmlFor="minAmount"
@@ -103,6 +109,7 @@ export function PriceFields() {
                   placeholder="0.00"
                   className="w-full mt-1"
                   value={field.value ?? ""}
+                  aria-invalid={!!fieldState.error}
                   onChange={(e) =>
                     field.onChange(
                       e.target.value === "" ? null : Number(e.target.value)
@@ -112,6 +119,11 @@ export function PriceFields() {
                 <p className="text-xs text-gray-500 mt-1">
                   Lasă gol pentru a permite orice sumă
                 </p>
+                {fieldState.error && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {fieldState.error.message}
+                  </p>
+                )}
               </div>
             )}
           />

@@ -138,7 +138,7 @@ export function ProductFields() {
           <Controller
             name="name"
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <div>
                 <Label
                   htmlFor="title"
@@ -150,8 +150,14 @@ export function ProductFields() {
                   id="title"
                   placeholder="Numele serviciului..."
                   className="w-full mt-1"
+                  aria-invalid={!!fieldState.error}
                   {...field}
                 />
+                {fieldState.error && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {fieldState.error.message}
+                  </p>
+                )}
               </div>
             )}
           />
@@ -202,7 +208,7 @@ export function ProductFields() {
           <Controller
             name="name"
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <div>
                 <Label
                   htmlFor="product-name"
@@ -214,8 +220,14 @@ export function ProductFields() {
                   id="product-name"
                   placeholder="Numele produsului digital..."
                   className="w-full mt-1"
+                  aria-invalid={!!fieldState.error}
                   {...field}
                 />
+                {fieldState.error && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {fieldState.error.message}
+                  </p>
+                )}
               </div>
             )}
           />
@@ -337,10 +349,11 @@ export function ProductFields() {
           <Controller
             name="name"
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <Input
                 placeholder="Găsește sau adaugă o donație..."
                 className="w-full"
+                aria-invalid={!!fieldState.error}
                 {...field}
               />
             )}
@@ -361,7 +374,7 @@ export function ProductFields() {
           <Controller
             name="name"
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <div>
                 <Label
                   htmlFor="campaign-title"
@@ -373,8 +386,14 @@ export function ProductFields() {
                   id="campaign-title"
                   placeholder="Enter campaign title..."
                   className="w-full mt-1"
+                  aria-invalid={!!fieldState.error}
                   {...field}
                 />
+                {fieldState.error && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {fieldState.error.message}
+                  </p>
+                )}
               </div>
             )}
           />

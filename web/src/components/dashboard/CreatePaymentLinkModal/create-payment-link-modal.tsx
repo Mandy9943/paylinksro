@@ -140,6 +140,7 @@ export default function CreatePaymentLinkModal({
             form="create-payment-link-form"
             type="submit"
             className="bg-blue-600 hover:bg-blue-700 text-white px-6"
+            disabled={!form.formState.isValid}
           >
             Creează link
           </Button>
@@ -147,11 +148,16 @@ export default function CreatePaymentLinkModal({
         <FormProvider {...form}>
           <form
             id="create-payment-link-form"
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(onSubmit, () => {})}
             className="flex flex-1 overflow-hidden"
           >
             {/* Left Panel - Form */}
             <div className="w-full md:w-1/2 p-6 overflow-y-auto">
+              {form.formState.isSubmitted && !form.formState.isValid && (
+                <div className="mb-4 rounded-md border border-red-300 bg-red-50 text-red-700 text-sm px-3 py-2">
+                  Verifică câmpurile evidențiate mai jos.
+                </div>
+              )}
               <TypeSelect />
               <ProductFields />
               <OptionsFields />
