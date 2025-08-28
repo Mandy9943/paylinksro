@@ -201,3 +201,18 @@ model FundraisingCampaign {
     currentRaised Int?    @default(0)
     coverImageUrl String?
 }
+
+// ---------------------------
+// Webhook idempotency store
+// ---------------------------
+
+model WebhookEvent {
+    id        String   @id @default(cuid())
+    provider  String   @default("STRIPE")
+    eventId   String
+    type      String?
+    createdAt DateTime @default(now())
+
+    @@unique([provider, eventId])
+    @@index([createdAt])
+}
