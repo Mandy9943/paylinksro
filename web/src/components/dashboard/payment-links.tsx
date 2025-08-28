@@ -146,6 +146,9 @@ export default function PaymentLinks() {
                     Nume
                   </TableHead>
                   <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+                    Tip
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
                     Preț
                   </TableHead>
                   <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
@@ -178,6 +181,18 @@ export default function PaymentLinks() {
                           {link.active ? "Activ" : "Inactiv"}
                         </Badge>
                       </div>
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-xs text-slate-600">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-400" />
+                        {link.serviceType === "SERVICE"
+                          ? "Serviciu"
+                          : link.serviceType === "DIGITAL_PRODUCT"
+                          ? "Produs digital"
+                          : link.serviceType === "DONATION"
+                          ? "Donație"
+                          : "Fundraising"}
+                      </span>
                     </TableCell>
                     <TableCell className="py-3 px-4 text-xs text-slate-600">
                       {link.priceType === "FIXED"

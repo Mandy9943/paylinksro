@@ -61,9 +61,9 @@ async function fetchPayLink(slug: string): Promise<PayLink | null> {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const data = await fetchPayLink(params.slug);
+  const data = await fetchPayLink((await params).slug);
   if (!data) return { title: "PayLink" };
   const cover =
     data.fundraising?.coverImageUrl ||
@@ -90,9 +90,10 @@ export async function generateMetadata({
 export default async function PublicPayLinkPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const data = await fetchPayLink(params.slug);
+  const slug = (await params).slug;
+  const data = await fetchPayLink(slug);
   if (!data) notFound();
 
   const mainColor = data.mainColor || "#fbbf24";
@@ -131,9 +132,7 @@ export default async function PublicPayLinkPage({
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
-        <div className="text-xs text-gray-500 mb-4">
-          🔗 paylink.ro/p/{params.slug}
-        </div>
+        <div className="text-xs text-gray-500 mb-4">🔗 paylink.ro/p/{slug}</div>
         <div className="bg-white rounded-lg shadow-sm border">
           <div className="flex flex-col md:flex-row">
             <div
@@ -305,7 +304,7 @@ export default async function PublicPayLinkPage({
                   </Label>
                   <div className="mt-2">
                     <PayWidget
-                      slug={params.slug}
+                      slug={slug}
                       priceType={priceType}
                       minAmount={minAmount}
                       requireEmail={collectEmail}
