@@ -1,7 +1,6 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import PayLinkPreview from "./PayLinkPreview";
 import PayWidget from "./PayWidget";
 export const runtime = "edge";
 // Minimal type aligned with web/src/api/paylinks.ts PayLink
@@ -87,7 +86,9 @@ export default async function PublicPayLinkPage({
   params: Promise<{ slug: string }>;
 }) {
   const slug = (await params).slug;
+
   const data = await fetchPayLink(slug);
+
   if (!data) notFound();
   const sellerOnboarded = !!data.sellerOnboarded;
 
@@ -117,12 +118,7 @@ export default async function PublicPayLinkPage({
   const targetAmount = data.fundraising?.targetAmount ?? 0;
   const currentRaised = data.fundraising?.currentRaised ?? 0;
 
-  const totalDueLabel = () => {
-    if (type === "fundraising") return "Enter amount below";
-    if (priceType === "FIXED") return `RON ${amount ?? 0}`;
-    if (minAmount && minAmount > 0) return `RON ${minAmount}+`;
-    return "La completarea formularului";
-  };
+  // Preview amount is driven by client component and PayWidget events
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -201,64 +197,15 @@ export default async function PublicPayLinkPage({
                   </div>
                 )}
 
-                <div className="text-2xl font-bold text-gray-900 mb-6">
-                  {type === "fundraising"
-                    ? "Any amount"
-                    : priceType === "FLEXIBLE"
-                    ? minAmount && minAmount > 0
-                      ? `RON ${minAmount}+`
-                      : "Sumă la alegere"
-                    : `RON ${amount ?? 0}`}
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>{name}</span>
-                    <span>
-                      {type === "fundraising"
-                        ? "Any amount"
-                        : priceType === "FLEXIBLE"
-                        ? minAmount && minAmount > 0
-                          ? `RON ${minAmount}+`
-                          : "Sumă la alegere"
-                        : `RON ${amount ?? 0}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>
-                      {type === "fundraising"
-                        ? "Enter amount below"
-                        : priceType === "FLEXIBLE"
-                        ? minAmount && minAmount > 0
-                          ? `RON ${minAmount}+`
-                          : "Sumă la alegere"
-                        : `RON ${amount ?? 0}`}
-                    </span>
-                  </div>
-                  {type === "fundraising" ? (
-                    <div className="flex justify-between font-semibold border-t pt-2">
-                      <span>Total due</span>
-                      <span>Enter amount below</span>
-                    </div>
-                  ) : priceType === "FIXED" ? (
-                    <>
-                      <div className="flex justify-between">
-                        <span>Tax %</span>
-                        <span>21%</span>
-                      </div>
-                      <div className="flex justify-between font-semibold border-t pt-2">
-                        <span>Total due</span>
-                        <span>RON {amount ?? 0}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex justify-between font-semibold border-t pt-2">
-                      <span>Total due</span>
-                      <span>{totalDueLabel()}</span>
-                    </div>
-                  )}
-                </div>
+                {/* Live preview synced with amount selected in PayWidget */}
+                <PayLinkPreview
+                  slug={slug}
+                  type={type}
+                  priceType={priceType}
+                  amount={amount}
+                  minAmount={minAmount}
+                  name={name}
+                />
               </div>
             </div>
 
@@ -270,31 +217,8 @@ export default async function PublicPayLinkPage({
                     târziu.
                   </div>
                 )}
-                {priceType === "FLEXIBLE" && (
-                  <div>
-                    <Label className="text-xs text-gray-600">
-                      Suma de plată (RON)
-                    </Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder={
-                        minAmount && minAmount > 0
-                          ? `Minim ${minAmount}`
-                          : "Introduceți suma"
-                      }
-                      className="mt-1"
-                      disabled={!sellerOnboarded}
-                    />
-                  </div>
-                )}
-
-                {/* Email is collected inside PayWidget when required */}
 
                 <div aria-disabled={!sellerOnboarded}>
-                  <Label className="text-xs text-gray-600">
-                    Metodă de plată
-                  </Label>
                   <div className="mt-2">
                     {sellerOnboarded ? (
                       <PayWidget

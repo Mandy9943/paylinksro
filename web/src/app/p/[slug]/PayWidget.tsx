@@ -45,6 +45,7 @@ function StartForm({
   minAmount,
   requireEmail,
   onEmailCaptured,
+  onAmountChange,
 }: {
   setClientSecret: (v: string) => void;
   requiresAmount: boolean;
@@ -52,6 +53,7 @@ function StartForm({
   minAmount?: number | null;
   requireEmail?: boolean;
   onEmailCaptured?: (email: string | undefined) => void;
+  onAmountChange?: (amount?: number) => void;
 }) {
   const [amount, setAmount] = useState<string>(
     minAmount ? String(minAmount) : ""
@@ -59,6 +61,29 @@ function StartForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState<string>("");
+
+  // Inform parent of the initial/default amount
+  useEffect(() => {
+    if (onAmountChange) {
+      const initial = requiresAmount
+        ? parseFloat((minAmount ?? 0).toString()) || undefined
+        : undefined;
+      // Only propagate if minAmount exists
+      if (minAmount) {
+        onAmountChange(initial);
+        try {
+          window.dispatchEvent(
+            new CustomEvent("paylink:amount-change", {
+              detail: { slug, amount: initial },
+            })
+          );
+        } catch {
+          // noop
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCreatePI = async () => {
     try {
@@ -86,7 +111,24 @@ function StartForm({
             type="number"
             step="0.01"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              if (onAmountChange) {
+                const v = parseFloat(e.target.value);
+                onAmountChange(Number.isFinite(v) && v > 0 ? v : undefined);
+              }
+              try {
+                const v = parseFloat(e.target.value);
+                const amt = Number.isFinite(v) && v > 0 ? v : undefined;
+                window.dispatchEvent(
+                  new CustomEvent("paylink:amount-change", {
+                    detail: { slug, amount: amt },
+                  })
+                );
+              } catch {
+                // noop
+              }
+            }}
             placeholder={
               minAmount && minAmount > 0
                 ? `Minim ${minAmount}`
@@ -285,6 +327,7 @@ export default function PayWidget({
   requireEmail,
   requirePhone,
   requireBilling,
+  onAmountChange,
 }: {
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
@@ -292,6 +335,7 @@ export default function PayWidget({
   requireEmail?: boolean;
   requirePhone?: boolean;
   requireBilling?: boolean;
+  onAmountChange?: (amount?: number) => void;
 }) {
   const requiresAmount = priceType === "FLEXIBLE";
   const [pk, setPk] = useState<string | null>(null);
@@ -338,6 +382,7 @@ export default function PayWidget({
         minAmount={minAmount}
         requireEmail={requireEmail}
         onEmailCaptured={setPayerEmail}
+        onAmountChange={onAmountChange}
       />
     );
   }

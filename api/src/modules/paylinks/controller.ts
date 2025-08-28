@@ -153,7 +153,8 @@ export async function publicGetBySlugCtrl(
       where: { id: p.userId },
       select: { stripeAccountId: true, onboardedAt: true },
     });
-    res.json({
+
+    const data = {
       ...p,
       amount: toRON(p.amount),
       minAmount: toRON((p as any).minAmount),
@@ -166,7 +167,9 @@ export async function publicGetBySlugCtrl(
             currentRaised: toRON(p.fundraising.currentRaised),
           }
         : null,
-    });
+    };
+
+    res.json(data);
   } catch (err) {
     next(err);
   }
