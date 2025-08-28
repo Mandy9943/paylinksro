@@ -23,17 +23,10 @@ model User {
     createdAt               DateTime         @default(now())
     updatedAt               DateTime         @updatedAt
     // Later: profile fields, roles, etc
-    sessions                Session[]
     magicTokens             MagicLinkToken[]
     payLinks                PayLink[]
-}
-
-model Session {
-    id        String   @id @default(cuid())
-    userId    String
-    user      User     @relation(fields: [userId], references: [id])
-    createdAt DateTime @default(now())
-    // Optional: expiresAt, userAgent, ip
+    customers               Customer[]
+    transactions            Transaction[]
 }
 
 model MagicLinkToken {
@@ -82,9 +75,10 @@ model PayLink {
     updatedAt             DateTime    @updatedAt
 
     // Optional 1-1 metadata depending on serviceType
-    service     ServiceItem?
-    product     DigitalProduct?
-    fundraising FundraisingCampaign?
+    service      ServiceItem?
+    product      DigitalProduct?
+    fundraising  FundraisingCampaign?
+    transactions Transaction[]
 
     @@unique([userId, slug])
     @@index([userId, createdAt])
@@ -100,6 +94,80 @@ enum ServiceType {
     DIGITAL_PRODUCT
     DONATION
     FUNDRAISING
+}
+
+// ---------------------------
+// Customers and Transactions
+// ---------------------------
+
+model Customer {
+    id           String   @id @default(cuid())
+    userId       String // Owner (seller)
+    user         User     @relation(fields: [userId], references: [id])
+    // Collected depending on PayLink configuration
+    email        String?
+    phone        String?
+    name         String?
+    // Basic billing address fields (Stripe-style)
+    addressLine1 String?
+    addressLine2 String?
+    city         String?
+    postalCode   String?
+    state        String?
+    country      String?
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+
+    transactions Transaction[]
+
+    @@index([userId, email])
+    @@index([userId, phone])
+}
+
+enum TransactionStatus {
+    SUCCEEDED
+    FAILED
+    REFUNDED
+    PENDING
+    UNCAPTURED
+    DISPUTED
+    REQUIRES_ACTION
+}
+
+model Transaction {
+    id         String    @id @default(cuid())
+    userId     String // Owner (seller)
+    user       User      @relation(fields: [userId], references: [id])
+    payLinkId  String
+    payLink    PayLink   @relation(fields: [payLinkId], references: [id])
+    customerId String?
+    customer   Customer? @relation(fields: [customerId], references: [id])
+
+    amount   Int // minor units (bani)
+    currency String            @default("RON")
+    status   TransactionStatus
+
+    // Stripe references
+    stripePaymentIntentId String? @unique
+    stripeChargeId        String? @unique
+
+    // Payment method details (if card)
+    paymentMethodType String?
+    cardBrand         String?
+    cardLast4         String?
+
+    description    String?
+    receiptUrl     String?
+    failureCode    String?
+    failureMessage String?
+    refundedAmount Int?
+    refundedAt     DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId, createdAt])
+    @@index([payLinkId, createdAt])
 }
 
 // Detailed info for service-type links

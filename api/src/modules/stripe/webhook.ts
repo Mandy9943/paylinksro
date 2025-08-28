@@ -42,6 +42,57 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
 
   try {
     switch (event.type) {
+      case "payment_intent.amount_capturable_updated": {
+        // Authorization created for manual capture flows
+        const pi = event.data.object as any;
+        const paylinkId = pi?.metadata?.paylinkId as string | undefined;
+        if (!paylinkId) break;
+        const link = await prisma.payLink.findUnique({
+          where: { id: paylinkId },
+          select: { id: true, userId: true, currency: true },
+        });
+        if (!link) break;
+        const amountMinor = (pi?.amount as number) ?? 0;
+        await prisma.transaction.upsert({
+          where: { stripePaymentIntentId: pi.id as string },
+          update: { status: "UNCAPTURED" },
+          create: {
+            userId: link.userId,
+            payLinkId: link.id,
+            amount: amountMinor,
+            currency: (link.currency || "RON").toUpperCase(),
+            status: "UNCAPTURED",
+            stripePaymentIntentId: pi.id as string,
+            description: pi?.description || null,
+          },
+        });
+        break;
+      }
+      case "payment_intent.requires_action": {
+        const pi = event.data.object as any;
+        const paylinkId = pi?.metadata?.paylinkId as string | undefined;
+        if (!paylinkId) break;
+        const link = await prisma.payLink.findUnique({
+          where: { id: paylinkId },
+          select: { id: true, userId: true, currency: true },
+        });
+        if (!link) break;
+        const amountMinor = (pi?.amount as number) ?? 0;
+        await prisma.transaction.upsert({
+          where: { stripePaymentIntentId: pi.id as string },
+          update: { status: "REQUIRES_ACTION" },
+          create: {
+            userId: link.userId,
+            payLinkId: link.id,
+            amount: amountMinor,
+            currency: (link.currency || "RON").toUpperCase(),
+            status: "REQUIRES_ACTION",
+            stripePaymentIntentId: pi.id as string,
+            description: pi?.description || null,
+          },
+        });
+        break;
+      }
       case "payment_intent.succeeded": {
         const pi = event.data.object as any;
 
@@ -75,6 +126,40 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
         }
 
         // Email/fulfillment happens in charge.succeeded to avoid duplication
+        break;
+      }
+      case "payment_intent.payment_failed": {
+        const pi = event.data.object as any;
+        const paylinkId = pi?.metadata?.paylinkId as string | undefined;
+        if (!paylinkId) break;
+
+        const link = await prisma.payLink.findUnique({
+          where: { id: paylinkId },
+          select: { id: true, userId: true, currency: true },
+        });
+        if (!link) break;
+
+        const failure = pi?.last_payment_error;
+        const amountMinor = (pi?.amount as number) ?? 0;
+
+        // Upsert by PI to be idempotent
+        await prisma.transaction.upsert({
+          where: { stripePaymentIntentId: pi.id as string },
+          update: {
+            status: "FAILED",
+            failureCode: failure?.code || null,
+            failureMessage: failure?.message || null,
+          },
+          create: {
+            userId: link.userId,
+            payLinkId: link.id,
+            amount: amountMinor,
+            currency: (link.currency || "RON").toUpperCase(),
+            status: "FAILED",
+            stripePaymentIntentId: pi.id as string,
+            description: pi?.description || null,
+          },
+        });
         break;
       }
       case "account.updated": {
@@ -140,10 +225,129 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
             id: true,
             name: true,
             serviceType: true,
+            userId: true,
+            currency: true,
+            collectEmail: true,
+            collectPhone: true,
+            collectBillingAddress: true,
             product: { select: { assets: true, name: true } },
           },
         });
         if (!link) break;
+
+        // Optionally create/update a Customer record depending on collect flags
+        let customerId: string | null = null;
+        try {
+          const bd = (charge?.billing_details || {}) as any;
+          const wantEmail = !!link.collectEmail;
+          const wantPhone = !!link.collectPhone;
+          const wantAddr = !!link.collectBillingAddress;
+          const hasEmail = !!bd.email;
+          const hasPhone = !!bd.phone;
+          const addr = bd.address || {};
+          const hasAddr = !!addr?.line1;
+          if (
+            (wantEmail && hasEmail) ||
+            (wantPhone && hasPhone) ||
+            (wantAddr && hasAddr)
+          ) {
+            // Try to find by email first, then phone
+            let existing = null as any;
+            if (hasEmail) {
+              existing = await prisma.customer.findFirst({
+                where: { userId: link.userId, email: bd.email as string },
+                select: { id: true },
+              });
+            }
+            if (!existing && hasPhone) {
+              existing = await prisma.customer.findFirst({
+                where: { userId: link.userId, phone: bd.phone as string },
+                select: { id: true },
+              });
+            }
+            if (existing) {
+              const updated = await prisma.customer.update({
+                where: { id: existing.id },
+                data: {
+                  email: wantEmail ? (bd.email as string | null) : undefined,
+                  phone: wantPhone ? (bd.phone as string | null) : undefined,
+                  name: (bd.name as string | null) ?? undefined,
+                  addressLine1: wantAddr
+                    ? (addr.line1 as string | null)
+                    : undefined,
+                  addressLine2: wantAddr
+                    ? (addr.line2 as string | null)
+                    : undefined,
+                  city: wantAddr ? (addr.city as string | null) : undefined,
+                  postalCode: wantAddr
+                    ? (addr.postal_code as string | null)
+                    : undefined,
+                  state: wantAddr ? (addr.state as string | null) : undefined,
+                  country: wantAddr
+                    ? (addr.country as string | null)
+                    : undefined,
+                },
+              });
+              customerId = updated.id;
+            } else {
+              const created = await prisma.customer.create({
+                data: {
+                  userId: link.userId,
+                  email: wantEmail ? (bd.email as string | null) : null,
+                  phone: wantPhone ? (bd.phone as string | null) : null,
+                  name: (bd.name as string | null) ?? null,
+                  addressLine1: wantAddr ? (addr.line1 as string | null) : null,
+                  addressLine2: wantAddr ? (addr.line2 as string | null) : null,
+                  city: wantAddr ? (addr.city as string | null) : null,
+                  postalCode: wantAddr
+                    ? (addr.postal_code as string | null)
+                    : null,
+                  state: wantAddr ? (addr.state as string | null) : null,
+                  country: wantAddr ? (addr.country as string | null) : null,
+                },
+                select: { id: true },
+              });
+              customerId = created.id;
+            }
+          }
+        } catch (err) {
+          logger.warn({ err }, "Failed to upsert Customer from charge");
+        }
+
+        // Create/Upsert Transaction for this charge
+        try {
+          const pm = (charge?.payment_method_details || {}) as any;
+          const pmType = pm?.type as string | undefined;
+          const card = pm?.card || {};
+          await prisma.transaction.upsert({
+            where: { stripeChargeId: charge.id as string },
+            update: {
+              status: "SUCCEEDED",
+              receiptUrl: (charge?.receipt_url as string | undefined) || null,
+              description: (charge?.description as string | undefined) || null,
+              refundedAmount:
+                (charge?.amount_refunded as number | undefined) || 0,
+            },
+            create: {
+              userId: link.userId,
+              payLinkId: link.id,
+              customerId: customerId || undefined,
+              amount: amountMinor,
+              currency: (link.currency || "RON").toUpperCase(),
+              status: "SUCCEEDED",
+              stripePaymentIntentId:
+                (charge?.payment_intent as string | undefined) || null,
+              stripeChargeId: charge.id as string,
+              paymentMethodType: pmType || null,
+              cardBrand: (card?.brand as string | undefined) || null,
+              cardLast4: (card?.last4 as string | undefined) || null,
+              description: (charge?.description as string | undefined) || null,
+              receiptUrl: (charge?.receipt_url as string | undefined) || null,
+            },
+          });
+        } catch (err) {
+          logger.warn({ err }, "Failed to upsert Transaction for charge");
+        }
 
         let extraHtml = "";
         if (link.serviceType === "DIGITAL_PRODUCT") {
@@ -201,6 +405,35 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
             { err, recipient },
             "Failed to send confirmation email (charge)"
           );
+        }
+        break;
+      }
+      case "charge.refunded": {
+        const charge = event.data.object as any;
+        try {
+          const refundedAmount = (charge?.amount_refunded as number) ?? null;
+          await prisma.transaction.updateMany({
+            where: { stripeChargeId: charge.id as string },
+            data: {
+              status: "REFUNDED",
+              refundedAmount: refundedAmount ?? undefined,
+              refundedAt: new Date(),
+            },
+          });
+        } catch (err) {
+          logger.warn({ err }, "Failed to mark transaction as refunded");
+        }
+        break;
+      }
+      case "charge.dispute.created": {
+        const dispute = event.data.object as any;
+        try {
+          await prisma.transaction.updateMany({
+            where: { stripeChargeId: dispute.charge as string },
+            data: { status: "DISPUTED" },
+          });
+        } catch (err) {
+          logger.warn({ err }, "Failed to mark transaction as disputed");
         }
         break;
       }

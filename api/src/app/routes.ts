@@ -2,8 +2,10 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { authRouter } from "../modules/auth/routes.js";
+import { customersRouter } from "../modules/customers/routes.js";
 import { payLinksRouter } from "../modules/paylinks/routes.js";
 import { stripeRouter } from "../modules/stripe/routes.js";
+import { transactionsRouter } from "../modules/transactions/routes.js";
 import { uploadsRouter } from "../modules/uploads/routes.js";
 
 export const router = Router();
@@ -12,6 +14,8 @@ router.use("/auth", authRouter);
 router.use("/stripe", stripeRouter);
 router.use("/paylinks", payLinksRouter);
 router.use("/uploads", uploadsRouter);
+router.use("/transactions", transactionsRouter);
+router.use("/customers", customersRouter);
 
 // Webhook lives outside of /api/v1 to avoid auth/validation middlewares; we expose it at root in app.ts
 // Export a lightweight sub-router to mount it from app.ts would be cleaner, but we can handle here too by exporting the handler.

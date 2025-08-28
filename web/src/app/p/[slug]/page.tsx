@@ -1,12 +1,5 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PayWidget from "./PayWidget";
@@ -289,15 +282,6 @@ export default async function PublicPayLinkPage({
 
                 {/* Email is collected inside PayWidget when required */}
 
-                {collectPhone && (
-                  <div>
-                    <Label className="text-xs text-gray-600">
-                      Număr de telefon
-                    </Label>
-                    <Input placeholder="+40 XXX XXX XXX" className="mt-1" />
-                  </div>
-                )}
-
                 <div>
                   <Label className="text-xs text-gray-600">
                     Metodă de plată
@@ -308,42 +292,11 @@ export default async function PublicPayLinkPage({
                       priceType={priceType}
                       minAmount={minAmount}
                       requireEmail={collectEmail}
+                      requirePhone={collectPhone}
+                      requireBilling={collectBillingAddress}
                     />
                   </div>
                 </div>
-
-                <div>
-                  <Label className="text-xs text-gray-600">
-                    Numele deținătorului cardului
-                  </Label>
-                  <Input
-                    placeholder="Numele complet de pe card"
-                    className="mt-1"
-                  />
-                </div>
-
-                {collectBillingAddress && (
-                  <div>
-                    <Label className="text-xs text-gray-600">
-                      Adresa de facturare
-                    </Label>
-                    <Select>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="România" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ro">România</SelectItem>
-                        <SelectItem value="us">Statele Unite</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input placeholder="Adresa linia 1" className="mt-2" />
-                    <Input placeholder="Adresa linia 2" className="mt-2" />
-                    <div className="flex space-x-2 mt-2">
-                      <Input placeholder="Oraș" className="flex-1" />
-                      <Input placeholder="Cod poștal" className="w-20" />
-                    </div>
-                  </div>
-                )}
 
                 {/* The PayWidget contains the pay button */}
 

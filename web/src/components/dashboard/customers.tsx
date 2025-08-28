@@ -1,4 +1,3 @@
-"use client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,16 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  BarChart3,
-  ChevronLeft,
-  ChevronRight,
-  Copy,
-  CreditCard,
-  Download,
-  Edit3,
-} from "lucide-react";
-import { useState } from "react";
+import { useCustomers } from "@/hooks/useCustomers";
+import { formatDate } from "@/lib/utils";
+import { ChevronLeft, ChevronRight, CreditCard, Users } from "lucide-react";
+import { useMemo, useState } from "react";
 
 const customerTabs = [
   { id: "all", label: "Toți", count: null },
@@ -31,182 +24,30 @@ const customerTabs = [
   { id: "high-disputes", label: "Contestații multe", count: null },
 ];
 
-const mockCustomers = [
-  {
-    name: "Mrs A Rosu",
-    type: "Guest",
-    email: "anamariacerap@yahoo.com",
-    paymentMethod: { brand: "mastercard", last4: "4366" },
-    created: "2 Aug, 12:51",
-    totalSpend: "RON 348.81",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "2 Aug",
-  },
-  {
-    name: "MISS G CRISAN",
-    type: "Guest",
-    email: "geanina_crisan25@yahoo.com",
-    paymentMethod: { brand: "visa", last4: "4744" },
-    created: "1 Aug, 21:13",
-    totalSpend: "RON 348.81",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "1 Aug",
-  },
-  {
-    name: "Magdalena curylo",
-    type: "Guest",
-    email: "mcurlyjo78@gmail.com",
-    paymentMethod: { brand: "visa", last4: "1941" },
-    created: "29 Jul, 10:23",
-    totalSpend: "RON 145.34",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "29 Jul",
-  },
-  {
-    name: "Ramona Bocan",
-    type: "Guest",
-    email: "Andreea781@icloud.com",
-    paymentMethod: { brand: "amex", last4: "1323" },
-    created: "28 Jul, 15:47",
-    totalSpend: "RON 290.68",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "28 Jul",
-  },
-  {
-    name: "Mr S Vadeanu",
-    type: "Guest",
-    email: "vadeanu.sorin@gmail.com",
-    paymentMethod: { brand: "visa", last4: "1673" },
-    created: "21 Jul, 16:18",
-    totalSpend: "RON 1,278.97",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "21 Jul",
-  },
-  {
-    name: "Andrea Garcia Londono",
-    type: "Guest",
-    email: "andreg1995@hotmail.com",
-    paymentMethod: { brand: "visa", last4: "7007" },
-    created: "20 Jul, 00:40",
-    totalSpend: "RON 174.41",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "20 Jul",
-  },
-  {
-    name: "Desislava H Koeva",
-    type: "Guest",
-    email: "d.koeva79@gmail.com",
-    paymentMethod: { brand: "visa", last4: "1621" },
-    created: "17 Jul, 14:38",
-    totalSpend: "RON 348.81",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "17 Jul",
-  },
-  {
-    name: "Farshid Malecki",
-    type: "Guest",
-    email: "farshid_maleki2003@yahoo.com",
-    paymentMethod: { brand: "visa", last4: "8251" },
-    created: "15 Jul, 18:03",
-    totalSpend: "RON 174.41",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "15 Jul",
-  },
-  {
-    name: "Narcis Popa",
-    type: "Guest",
-    email: "popanarcis1987@yahoo.com",
-    paymentMethod: { brand: "visa", last4: "5019" },
-    created: "15 Jul, 10:32",
-    totalSpend: "RON 877.84",
-    payments: 2,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "17 Jul",
-  },
-  {
-    name: "Razvan Marcocci",
-    type: "Guest",
-    email: "rmarco123@icloud.com",
-    paymentMethod: { brand: "mastercard", last4: "3943" },
-    created: "13 Jul, 16:51",
-    totalSpend: "RON 348.81",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "13 Jul",
-  },
-  {
-    name: "Vasile Sandu",
-    type: "Guest",
-    email: "sandumaya670@gmail.com",
-    paymentMethod: { brand: "mastercard", last4: "1878" },
-    created: "13 Jul, 16:16",
-    totalSpend: "RON 872.03",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "13 Jul",
-  },
-  {
-    name: "gheorghe baiculescu",
-    type: "Guest",
-    email: "marcobaiculescu@icloud.com",
-    paymentMethod: { brand: "visa", last4: "5894" },
-    created: "12 Jul, 14:22",
-    totalSpend: "RON 174.41",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "12 Jul",
-  },
-  {
-    name: "Regele Englez",
-    type: "Guest",
-    email: "englezu2018@hotmail.com",
-    paymentMethod: { brand: "visa", last4: "1730" },
-    created: "12 Jul, 10:52",
-    totalSpend: "RON 174.41",
-    payments: 1,
-    refunds: "RON 0.00",
-    disputeLosses: "RON 0.00",
-    lastSeen: "12 Jul",
-  },
-];
+function formatRON(minor?: number) {
+  return new Intl.NumberFormat("ro-RO", {
+    style: "currency",
+    currency: "RON",
+  }).format(((minor ?? 0) as number) / 100);
+}
 
-type Method = { brand: string; last4: string };
-function PaymentMethodIcon({ method }: { method: Method }) {
-  if (method.brand === "visa") {
+type PM = { brand?: string | null };
+function PaymentMethodIcon({ method }: { method: PM }) {
+  if (method?.brand === "visa") {
     return (
       <div className="w-6 h-4 bg-blue-600 text-white text-xs font-bold flex items-center justify-center rounded">
         VISA
       </div>
     );
   }
-  if (method.brand === "mastercard") {
+  if (method?.brand === "mastercard") {
     return (
       <div className="w-6 h-4 bg-red-500 text-white text-xs font-bold flex items-center justify-center rounded">
         MC
       </div>
     );
   }
-  if (method.brand === "amex") {
+  if (method?.brand === "amex") {
     return (
       <div className="w-6 h-4 bg-green-600 text-white text-xs font-bold flex items-center justify-center rounded">
         AX
@@ -218,197 +59,159 @@ function PaymentMethodIcon({ method }: { method: Method }) {
 
 export default function Customers() {
   const [activeTab, setActiveTab] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const { data, isLoading } = useCustomers(activeTab);
+
+  const allCustomers = useMemo(() => data?.items ?? [], [data]);
+  const filteredCustomers = useMemo(() => allCustomers, [allCustomers]);
+
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-slate-500 mb-1">
-            Gestionează relațiile cu
-          </p>
-          <h2 className="text-xl font-semibold text-slate-900">
-            Toți clienții
-          </h2>
-        </div>
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
-          >
-            <Copy className="h-3.5 w-3.5" />
-            Copiează
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Exportă
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
-          >
-            <BarChart3 className="h-3.5 w-3.5" />
-            Analizează
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
-          >
-            <Edit3 className="h-3.5 w-3.5" />
-            Editează coloanele
-          </Button>
-        </div>
-      </div>
-
       {/* Filter Tabs */}
-      <div className="flex items-center space-x-1 overflow-x-auto">
+      <div className="flex flex-wrap gap-2">
         {customerTabs.map((tab) => (
           <Button
             key={tab.id}
-            variant={activeTab === tab.id ? "default" : "ghost"}
+            variant={activeTab === tab.id ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveTab(tab.id)}
-            className={`whitespace-nowrap h-8 px-3 text-xs font-medium rounded-lg transition-all ${
-              activeTab === tab.id
-                ? "bg-blue-600 text-white shadow-sm"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-            }`}
+            className="text-xs h-8"
           >
             {tab.label}
           </Button>
         ))}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 hover:bg-slate-100/70"
-        >
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-        </Button>
       </div>
 
       {/* Customers Table */}
-      <Card className="border-0 shadow-sm bg-white">
+      <Card className="border-0 shadow-sm bg-white/60 backdrop-blur-sm">
         <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-50/50">
-              <TableRow className="border-b border-slate-200/60">
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
-                  Nume
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
-                  Email
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
-                  Metoda de plată implicită
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
-                  Creat ↕
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
-                  Total cheltuit ↕
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
-                  Plăți ↕
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
-                  Rambursări ↕
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
-                  Pierderi din contestații ↕
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
-                  Ultima vizită
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {mockCustomers.map((customer, index) => (
-                <TableRow
-                  key={index}
-                  className={`border-b border-slate-100 hover:bg-slate-50/30 transition-colors ${
-                    index % 2 === 0 ? "bg-white" : "bg-slate-50/20"
-                  }`}
-                >
-                  <TableCell className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-slate-900 text-sm">
-                        {customer.name}
-                      </span>
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-slate-100 text-slate-600 border-0 px-2 py-0.5"
+          {isLoading ? (
+            <div className="p-6 text-sm text-slate-500">Se încarcă...</div>
+          ) : filteredCustomers.length === 0 ? (
+            <div className="p-8 text-center">
+              <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">
+                Nu ai clienți încă
+              </h3>
+              <p className="text-sm text-slate-500">
+                Clienții vor apărea aici odată ce vei primi primul tău payment.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-slate-200/60 hover:bg-transparent">
+                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                        Client
+                      </TableHead>
+                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                        Email
+                      </TableHead>
+                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                        Metodă de plată
+                      </TableHead>
+                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                        Total cheltuit
+                      </TableHead>
+                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                        Plăți
+                      </TableHead>
+                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                        Ultima vizită
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedCustomers.map((customer, index) => (
+                      <TableRow
+                        key={index}
+                        className="border-slate-200/40 hover:bg-slate-50/30 transition-colors"
                       >
-                        {customer.type === "Guest" ? "Invitat" : customer.type}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs text-slate-600 py-3 px-4">
-                    {customer.email}
-                  </TableCell>
-                  <TableCell className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      <PaymentMethodIcon method={customer.paymentMethod} />
-                      <span className="text-xs text-slate-500">
-                        •••• {customer.paymentMethod.last4}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs text-slate-600 py-3 px-4">
-                    {customer.created}
-                  </TableCell>
-                  <TableCell className="text-xs font-semibold text-slate-900 py-3 px-4">
-                    {customer.totalSpend}
-                  </TableCell>
-                  <TableCell className="text-xs text-slate-600 py-3 px-4">
-                    {customer.payments}
-                  </TableCell>
-                  <TableCell className="text-xs text-slate-600 py-3 px-4">
-                    {customer.refunds}
-                  </TableCell>
-                  <TableCell className="text-xs text-slate-600 py-3 px-4">
-                    {customer.disputeLosses}
-                  </TableCell>
-                  <TableCell className="text-xs text-slate-600 py-3 px-4">
-                    {customer.lastSeen}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                        <TableCell className="py-3">
+                          <div>
+                            <div className="font-medium text-slate-900">
+                              {customer.name || customer.email || "—"}
+                            </div>
+                            <Badge variant="secondary" className="text-xs mt-1">
+                              {(customer.payments ?? 0) > 1
+                                ? "Recurent"
+                                : "Nou"}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-slate-600 py-3">
+                          {customer.email || "—"}
+                        </TableCell>
+                        <TableCell className="py-3">
+                          <div className="flex items-center space-x-2">
+                            <PaymentMethodIcon method={{ brand: undefined }} />
+                            <span className="text-xs text-slate-600">
+                              {/* Last4 not stored per-customer in this view */}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-semibold text-slate-900 py-3">
+                          {formatRON(customer.totalAmount)}
+                        </TableCell>
+                        <TableCell className="text-sm text-slate-600 py-3">
+                          {customer.payments}
+                        </TableCell>
+                        <TableCell className="text-sm text-slate-500 py-3">
+                          {formatDate(customer.createdAt)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200/60">
+                  <div className="text-sm text-slate-500">
+                    Se afișează {startIndex + 1}-
+                    {Math.min(endIndex, filteredCustomers.length)} din{" "}
+                    {filteredCustomers.length} clienți
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-slate-600">
+                      Pagina {currentPage} din {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between mt-3">
-        <div className="text-xs text-slate-500">
-          Afișare 1–10 din {mockCustomers.length} rezultate
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
-          >
-            <ChevronLeft className="w-3.5 h-3.5 mr-1" />
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
-          >
-            Următorul
-            <ChevronRight className="w-3.5 h-3.5 ml-1" />
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

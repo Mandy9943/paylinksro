@@ -44,12 +44,14 @@ function StartForm({
   slug,
   minAmount,
   requireEmail,
+  onEmailCaptured,
 }: {
   setClientSecret: (v: string) => void;
   requiresAmount: boolean;
   slug: string;
   minAmount?: number | null;
   requireEmail?: boolean;
+  onEmailCaptured?: (email: string | undefined) => void;
 }) {
   const [amount, setAmount] = useState<string>(
     minAmount ? String(minAmount) : ""
@@ -63,11 +65,9 @@ function StartForm({
       setLoading(true);
       setError(null);
       const val = requiresAmount ? parseFloat(amount || "0") : undefined;
-      const cs = await createPublicPI(
-        slug,
-        val,
-        requireEmail ? email || undefined : undefined
-      );
+      const emailToUse = requireEmail ? email || undefined : undefined;
+      if (onEmailCaptured) onEmailCaptured(emailToUse);
+      const cs = await createPublicPI(slug, val, emailToUse);
       setClientSecret(cs);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Cannot create payment";
@@ -124,21 +124,56 @@ function StartForm({
 }
 
 // PaymentForm: rendered inside <Elements> only. Safe to use Stripe hooks here.
-function PaymentForm() {
+function PaymentForm({
+  requirePhone,
+  requireBilling,
+  payerEmail,
+}: {
+  requirePhone?: boolean;
+  requireBilling?: boolean;
+  payerEmail?: string | undefined;
+}) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [succeeded, setSucceeded] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [addr1, setAddr1] = useState("");
+  const [addr2, setAddr2] = useState("");
+  const [city, setCity] = useState("");
+  const [postal, setPostal] = useState("");
+  const [country, setCountry] = useState("RO");
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
     setLoading(true);
     setError(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const billingDetails: any = {
+      name: name || undefined,
+      email: payerEmail || undefined,
+      phone: requirePhone ? phone || undefined : undefined,
+      address: requireBilling
+        ? {
+            line1: addr1 || undefined,
+            line2: addr2 || undefined,
+            city: city || undefined,
+            postal_code: postal || undefined,
+            country: country || undefined,
+          }
+        : undefined,
+    };
     const { error } = await stripe.confirmPayment({
       elements,
-      confirmParams: { return_url: window.location.href },
+      confirmParams: {
+        return_url: window.location.href,
+        payment_method_data: {
+          billing_details: billingDetails,
+        },
+      },
       redirect: "if_required",
     });
     if (error) setError(error.message || "Payment failed");
@@ -167,6 +202,65 @@ function PaymentForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
+      <div className="space-y-3">
+        <div>
+          <Label className="text-xs text-gray-600">Nume pe card</Label>
+          <Input
+            placeholder="Numele complet de pe card"
+            className="mt-1"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        {requirePhone && (
+          <div>
+            <Label className="text-xs text-gray-600">Număr de telefon</Label>
+            <Input
+              placeholder="+40 XXX XXX XXX"
+              className="mt-1"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+        )}
+        {requireBilling && (
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-600">Adresa de facturare</Label>
+            <Input
+              placeholder="Adresa linia 1"
+              className="mt-1"
+              value={addr1}
+              onChange={(e) => setAddr1(e.target.value)}
+            />
+            <Input
+              placeholder="Adresa linia 2"
+              className="mt-1"
+              value={addr2}
+              onChange={(e) => setAddr2(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <Input
+                placeholder="Oraș"
+                className="flex-1"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
+              <Input
+                placeholder="Cod poștal"
+                className="w-28"
+                value={postal}
+                onChange={(e) => setPostal(e.target.value)}
+              />
+              <Input
+                placeholder="Țara (ex: RO)"
+                className="w-24"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
+      </div>
       <PaymentElement />
       {error && <div className="text-sm text-red-600">{error}</div>}
       <Button
@@ -189,17 +283,22 @@ export default function PayWidget({
   priceType,
   minAmount,
   requireEmail,
+  requirePhone,
+  requireBilling,
 }: {
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
   minAmount?: number | null;
   requireEmail?: boolean;
+  requirePhone?: boolean;
+  requireBilling?: boolean;
 }) {
   const requiresAmount = priceType === "FLEXIBLE";
   const [pk, setPk] = useState<string | null>(null);
   const [stripePromise, setStripePromise] =
     useState<Promise<Stripe | null> | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [payerEmail, setPayerEmail] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let ignore = false;
@@ -238,6 +337,7 @@ export default function PayWidget({
         slug={slug}
         minAmount={minAmount}
         requireEmail={requireEmail}
+        onEmailCaptured={setPayerEmail}
       />
     );
   }
@@ -253,7 +353,11 @@ export default function PayWidget({
       options={elementsOptions}
       key={clientSecret}
     >
-      <PaymentForm />
+      <PaymentForm
+        requirePhone={requirePhone}
+        requireBilling={requireBilling}
+        payerEmail={payerEmail}
+      />
     </Elements>
   );
 }
