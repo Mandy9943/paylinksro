@@ -60,11 +60,11 @@ export async function onChargeSucceeded(event: any) {
             key: it.key,
             expiresInSeconds: 60 * 60 * 24,
           }),
-          name: it.name || it.key.split("/").pop() || "Download",
+          name: it.name || it.key.split("/").pop() || "Descărcare",
         }))
       );
       extraHtml = `
-        <p>Your downloads (valid for 24 hours):</p>
+        <p>Descărcările dvs. (valabile 24 de ore):</p>
         <ul>
           ${links
             .map((l) => `<li><a href="${l.url}">${l.name}</a></li>`)
@@ -74,14 +74,14 @@ export async function onChargeSucceeded(event: any) {
     }
   }
 
-  const subject = `Payment received — ${link.name}`;
+  const subject = `Plată primită — ${link.name}`;
   const amountRON = (amountMinor / 100).toFixed(2);
   const html = `
     <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
-      <h2>Thank you!</h2>
-      <p>We received your payment of <strong>${amountRON} RON</strong> for <strong>${link.name}</strong>.</p>
+      <h2>Mulțumim!</h2>
+      <p>Am primit plata de <strong>${amountRON} RON</strong> pentru <strong>${link.name}</strong>.</p>
       ${extraHtml}
-      <p style="color:#64748b; font-size: 12px; margin-top: 24px;">If you have questions, just reply to this email.</p>
+      <p style="color:#64748b; font-size: 12px; margin-top: 24px;">Dacă aveți întrebări, răspundeți la acest email.</p>
     </div>
   `;
   try {
