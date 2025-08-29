@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { CheckCircle2, Mail, X } from "lucide-react";
+import { useEffect, useState } from "react";
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,17 +17,19 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [email, setEmail] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0); // seconds remaining to allow resend
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setErrorMsg(null);
     requestMagicLink(email)
       .then(() => {
-        toast("Verifică emailul", {
-          description:
-            "Ți-am trimis un link de autentificare. Dă click pe el pentru a continua.",
-        });
-        onClose();
+        // Show an in-modal success screen instead of a toast
+        setSent(true);
+        setCooldown(30);
       })
       .catch((error: unknown) => {
         const description =
@@ -37,10 +38,48 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             : typeof error === "string"
             ? error
             : "A apărut o eroare";
-        toast("Eroare", { description });
+        setErrorMsg(description);
       })
       .finally(() => setSubmitting(false));
   };
+
+  const handleResend = () => {
+    if (submitting || cooldown > 0) return;
+    setSubmitting(true);
+    setErrorMsg(null);
+    requestMagicLink(email)
+      .then(() => {
+        setCooldown(30);
+      })
+      .catch((error: unknown) => {
+        const description =
+          error instanceof Error
+            ? error.message
+            : typeof error === "string"
+            ? error
+            : "A apărut o eroare";
+        setErrorMsg(description);
+      })
+      .finally(() => setSubmitting(false));
+  };
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setTimeout(() => {
+      setCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => clearTimeout(id);
+  }, [cooldown]);
+
+  // Optional: when the modal closes, reset success state and cooldown
+  useEffect(() => {
+    if (!isOpen) {
+      setSent(false);
+      setCooldown(0);
+      setSubmitting(false);
+      setErrorMsg(null);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -57,63 +96,103 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <X className="h-4 w-4" />
           </Button>
 
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {isLogin ? "Conectează-te la PayLink" : "Creează cont PayLink"}
-            </h2>
-            <p className="text-gray-600">
-              {isLogin
-                ? "Introdu datele tale pentru a continua"
-                : "Completează formularul pentru a începe"}
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label
-                htmlFor="email"
-                className="text-sm font-medium text-gray-700"
-              >
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="exemplu@email.ro"
-                required
-                className="mt-2"
-              />
+          {sent ? (
+            <div className="text-center">
+              <CheckCircle2 className="mx-auto h-14 w-14 text-green-600 mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Verifică-ți emailul
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Ți-am trimis un link de autentificare{" "}
+                {email ? `pe ${email}` : ""}.<br />
+                Deschide emailul și urmează instrucțiunile pentru a continua.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button className="paylink-button-primary" onClick={onClose}>
+                  Am înțeles
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={submitting || cooldown > 0}
+                  onClick={handleResend}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  {cooldown > 0
+                    ? `Trimite din nou (${cooldown}s)`
+                    : "Trimite din nou"}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                Nu găsești emailul? Verifică și folderul Spam/Promoții.
+              </p>
             </div>
+          ) : (
+            <>
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {isLogin
+                    ? "Conectează-te la PayLink"
+                    : "Creează cont PayLink"}
+                </h2>
+                <p className="text-gray-600">
+                  {isLogin
+                    ? "Introdu datele tale pentru a continua"
+                    : "Completează formularul pentru a începe"}
+                </p>
+              </div>
 
-            {/* Password removed: magic link flow only needs email */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="exemplu@email.ro"
+                    required
+                    className="mt-2"
+                  />
+                </div>
 
-            <Button
-              type="submit"
-              className="w-full paylink-button-primary"
-              disabled={submitting}
-            >
-              {submitting
-                ? "Se procesează..."
-                : isLogin
-                ? "Conectează-te"
-                : "Creează cont"}
-            </Button>
-          </form>
+                {errorMsg ? (
+                  <p className="text-sm text-red-600" role="alert">
+                    {errorMsg}
+                  </p>
+                ) : null}
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              {isLogin ? "Nu ai cont?" : "Ai deja cont?"}{" "}
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-blue-600 font-medium hover:underline"
-              >
-                {isLogin ? "Înregistrează-te" : "Conectează-te"}
-              </button>
-            </p>
-          </div>
+                <Button
+                  type="submit"
+                  className="w-full paylink-button-primary"
+                  disabled={submitting}
+                >
+                  {submitting
+                    ? "Se procesează..."
+                    : isLogin
+                    ? "Conectează-te"
+                    : "Creează cont"}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-gray-600">
+                  {isLogin ? "Nu ai cont?" : "Ai deja cont?"}{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsLogin(!isLogin)}
+                    className="text-blue-600 font-medium hover:underline"
+                  >
+                    {isLogin ? "Înregistrează-te" : "Conectează-te"}
+                  </button>
+                </p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
