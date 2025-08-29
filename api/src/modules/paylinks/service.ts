@@ -1,6 +1,21 @@
 import { prisma } from "../../lib/prisma.js";
 import type { CreatePayLinkInput, UpdatePayLinkInput } from "./schemas.js";
 
+// Generate a human-friendly unique slug by appending a numeric suffix when needed
+async function ensureUniqueSlug(baseSlug: string) {
+  // Treat trailing -<number> as a suffix and use the root for uniqueness
+  const root = baseSlug.replace(/-\d+$/, "");
+  const existing = await prisma.payLink.findMany({
+    where: { slug: { startsWith: root } },
+    select: { slug: true },
+  });
+  const taken = new Set(existing.map((e) => e.slug));
+  if (!taken.has(root)) return root;
+  let n = 2;
+  while (taken.has(`${root}-${n}`)) n++;
+  return `${root}-${n}`;
+}
+
 export async function listPayLinks(
   userId: string,
   limit = 50,
@@ -58,10 +73,12 @@ export async function listPayLinks(
 }
 
 export async function createPayLink(userId: string, data: CreatePayLinkInput) {
+  // Ensure slug uniqueness (global) while keeping it readable
+  const uniqueSlug = await ensureUniqueSlug(data.slug);
   const toCreate = {
     userId,
     name: data.name,
-    slug: data.slug,
+    slug: uniqueSlug,
     priceType: data.priceType,
     amount: data.priceType === "FIXED" ? data.amount ?? 0 : null,
     minAmount:
@@ -134,6 +151,10 @@ export async function updatePayLink(
   }
 
   const next: any = { ...data };
+  // If slug is being changed, ensure uniqueness
+  if (typeof data.slug !== "undefined" && data.slug !== existing.slug) {
+    next.slug = await ensureUniqueSlug(data.slug);
+  }
   if (data.priceType) {
     next.amount =
       data.priceType === "FIXED" ? data.amount ?? existing.amount ?? 0 : null;

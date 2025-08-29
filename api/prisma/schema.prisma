@@ -61,7 +61,7 @@ model PayLink {
     userId                String
     user                  User        @relation(fields: [userId], references: [id])
     name                  String
-    slug                  String
+    slug                  String      @unique
     priceType             PriceType
     amount                Int? // in minor units (bani) when priceType == FIXED
     minAmount             Int? // in minor units (bani) when priceType == FLEXIBLE
@@ -82,7 +82,6 @@ model PayLink {
     fundraising  FundraisingCampaign?
     transactions Transaction[]
 
-    @@unique([userId, slug])
     @@index([userId, createdAt])
 }
 
@@ -193,14 +192,14 @@ enum PayoutInterval {
 }
 
 model UserSettings {
-    id                String         @id @default(cuid())
-    userId            String         @unique
-    user              User           @relation(fields: [userId], references: [id])
+    id     String @id @default(cuid())
+    userId String @unique
+    user   User   @relation(fields: [userId], references: [id])
 
     // Payments settings
-    autoPayouts       Boolean        @default(true)
-    payoutInterval    PayoutInterval @default(daily)
-    emailNotifications Boolean       @default(true)
+    autoPayouts        Boolean        @default(true)
+    payoutInterval     PayoutInterval @default(daily)
+    emailNotifications Boolean        @default(true)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
