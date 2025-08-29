@@ -57,6 +57,7 @@ export default function EmbeddedOnboarding() {
           return sess.client_secret as string;
         },
         appearance: { overlays: "dialog" },
+        locale: "ro",
       });
       setConnectInstance(instance);
     } catch (e) {

@@ -352,7 +352,11 @@ export default function PayWidget({
         if (ignore) return;
         setPk(key);
         // Initialize Stripe for the platform account (destination charges used server-side)
-        setStripePromise(loadStripe(key));
+        setStripePromise(
+          loadStripe(key, {
+            locale: "ro",
+          })
+        );
         if (!requiresAmount && !requireEmail) {
           // Fixed-price: create PI immediately
           const cs = await createPublicPI(slug);

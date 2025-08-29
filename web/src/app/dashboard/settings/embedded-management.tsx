@@ -39,6 +39,7 @@ export default function EmbeddedManagement() {
           );
           return sess.client_secret as string;
         },
+        locale: "ro",
       });
       setConnectInstance(instance);
     } catch (e) {
