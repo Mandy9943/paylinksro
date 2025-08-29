@@ -5,7 +5,7 @@ export type CustomerListItem = {
   name?: string | null;
   email?: string | null;
   phone?: string | null;
-  createdAt: string;
+  updatedAt: string;
   totalAmount?: number; // minor units
   payments?: number;
 };

@@ -22,7 +22,7 @@ export async function listCustomersService(args: {
       name: true,
       email: true,
       phone: true,
-      createdAt: true,
+      updatedAt: true,
     },
   });
   const hasMore = items.length > limit;
@@ -64,7 +64,7 @@ export async function listCustomersService(args: {
   } else if (segment === "recent") {
     enriched = enriched.sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
   }
   // high-refunds / high-disputes require more metrics; left for later

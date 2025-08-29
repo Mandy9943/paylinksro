@@ -1,3 +1,4 @@
+import type Stripe from "stripe";
 import { prisma } from "../../lib/prisma.js";
 import { getStripe } from "../../lib/stripe.js";
 
@@ -29,6 +30,7 @@ export async function createConnectedAccount(meta: {
         requested: true,
       },
     },
+
     metadata: meta,
   });
 }
@@ -135,4 +137,88 @@ export async function createPaymentIntentConnected(
     { stripeAccount: accountId }
   );
   return intent;
+}
+
+export async function getConnectedBalanceSummary(accountId: string) {
+  const stripe = getStripe();
+  const balance = await stripe.balance.retrieve({
+    stripeAccount: accountId,
+  } as any);
+  console.log("getConnectedBalanceSummary balance", balance);
+
+  const ronAvail = (balance.available || []).find(
+    (b: any) => (b.currency || "").toLowerCase() === "ron"
+  );
+  const ronPending = (balance.pending || []).find(
+    (b: any) => (b.currency || "").toLowerCase() === "ron"
+  );
+  // Sum payouts to date (limit pages for safety) and compute processing (pending/in_transit)
+  let totalTransferredMinor = 0;
+  let processingMinor = 0;
+  let startingAfter: string | undefined = undefined;
+  for (let i = 0; i < 3; i++) {
+    const payouts: Stripe.ApiList<Stripe.Payout> = await stripe.payouts.list(
+      { limit: 100, starting_after: startingAfter },
+      { stripeAccount: accountId }
+    );
+    for (const p of payouts.data) {
+      if ((p.currency || "").toLowerCase() !== "ron") continue;
+      if (p.status === "paid") totalTransferredMinor += p.amount || 0;
+      if (p.status === "pending" || p.status === "in_transit")
+        processingMinor += p.amount || 0;
+    }
+    if (!payouts.has_more) break;
+    startingAfter = payouts.data[payouts.data.length - 1]?.id;
+    if (!startingAfter) break;
+  }
+  return {
+    currency: "RON",
+    availableMinor: ronAvail?.amount ?? 0,
+    pendingMinor: ronPending?.amount ?? 0,
+    totalTransferredMinor,
+    processingMinor,
+  };
+}
+
+export async function listPayoutsConnected(
+  accountId: string,
+  opts?: { limit?: number; startingAfter?: string }
+) {
+  const stripe = getStripe();
+  const res = await stripe.payouts.list(
+    { limit: opts?.limit ?? 50, starting_after: opts?.startingAfter },
+    { stripeAccount: accountId }
+  );
+  return res.data
+    .filter((p) => (p.currency || "").toLowerCase() === "ron")
+    .map((p) => ({
+      id: p.id,
+      amountMinor: p.amount || 0,
+      currency: (p.currency || "ron").toUpperCase(),
+      status: p.status,
+      created: p.created ? new Date(p.created * 1000) : null,
+      arrivalDate: p.arrival_date ? new Date(p.arrival_date * 1000) : null,
+      method: (p.method as string | undefined) || null,
+      statementDescriptor: (p.statement_descriptor as string | undefined) || null,
+    }));
+}
+
+export async function createPayoutOnConnected(
+  accountId: string,
+  params: { amountMinor: number; currency?: string; statementDescriptor?: string }
+) {
+  const stripe = getStripe();
+  const currency = (params.currency || "ron").toLowerCase();
+  if (currency !== "ron") {
+    throw Object.assign(new Error("Unsupported currency"), { status: 400 });
+  }
+  const payout = await stripe.payouts.create(
+    {
+      amount: Math.max(1, Math.floor(params.amountMinor)),
+      currency,
+      statement_descriptor: params.statementDescriptor,
+    } as any,
+    { stripeAccount: accountId }
+  );
+  return payout;
 }

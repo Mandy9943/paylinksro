@@ -15,6 +15,9 @@ import {
   createPaymentIntentConnected,
   createProductOnConnected,
   ensureUserConnectedAccount,
+  getConnectedBalanceSummary,
+  listPayoutsConnected,
+  createPayoutOnConnected,
   listProductsConnected,
   retrieveAccount,
 } from "./service.js";
@@ -96,4 +99,72 @@ export async function createPaymentIntentHandler(req: Request, res: Response) {
     applicationFeeAmount,
   });
   res.json({ client_secret: intent.client_secret });
+}
+
+export async function getMyBalanceHandler(req: Request, res: Response) {
+  const auth = (req as any).user as { id: string };
+  const dbUser = await prisma.user.findUnique({
+    where: { id: auth.id },
+    select: { stripeAccountId: true },
+  });
+  const accountId = dbUser?.stripeAccountId;
+
+  if (!accountId)
+    return res.json({
+      currency: "RON",
+      available: 0,
+      pending: 0,
+      totalTransferred: 0,
+    });
+  const summary = await getConnectedBalanceSummary(accountId);
+  const toMajor = (n: number) => Math.round((n / 100) * 100) / 100;
+  res.json({
+    currency: summary.currency,
+    available: toMajor(summary.availableMinor),
+    pending: toMajor(summary.pendingMinor),
+    totalTransferred: toMajor(summary.totalTransferredMinor),
+    processing: toMajor(summary.processingMinor || 0),
+  });
+}
+
+export async function listMyPayoutsHandler(req: Request, res: Response) {
+  const auth = (req as any).user as { id: string };
+  const dbUser = await prisma.user.findUnique({
+    where: { id: auth.id },
+    select: { stripeAccountId: true },
+  });
+  const accountId = dbUser?.stripeAccountId;
+  if (!accountId) return res.json({ items: [], hasMore: false });
+
+  const { limit, startingAfter } = ((req as any).validated?.query || {}) as {
+    limit?: number;
+    startingAfter?: string;
+  };
+  const items = await listPayoutsConnected(accountId, { limit, startingAfter });
+  res.json({ items });
+}
+
+export async function createMyPayoutHandler(req: Request, res: Response) {
+  const auth = (req as any).user as { id: string };
+  const dbUser = await prisma.user.findUnique({
+    where: { id: auth.id },
+    select: { stripeAccountId: true },
+  });
+  const accountId = dbUser?.stripeAccountId;
+  if (!accountId)
+    return res.status(400).json({ error: { message: "No connected account" } });
+
+  const body = (req as any).validated?.body as {
+    amount: number;
+    currency?: string;
+    statementDescriptor?: string;
+  };
+  // amount provided in major units (RON)
+  const amountMinor = Math.floor(Math.max(0.5, body.amount) * 100);
+  const payout = await createPayoutOnConnected(accountId, {
+    amountMinor,
+    currency: body.currency,
+    statementDescriptor: body.statementDescriptor,
+  });
+  res.json({ payout });
 }

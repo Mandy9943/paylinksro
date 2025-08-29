@@ -8,8 +8,11 @@ import {
   createProductHandler,
   ensureMyAccountHandler,
   getAccountHandler,
+  getMyBalanceHandler,
   getPublishableKeyHandler,
   listProductsHandler,
+  listMyPayoutsHandler,
+  createMyPayoutHandler,
 } from "./controller.js";
 import {
   AccountIdParamSchema,
@@ -17,6 +20,8 @@ import {
   CreatePaymentIntentBodySchema,
   CreateProductBodySchema,
   ListProductsQuerySchema,
+  ListPayoutsQuerySchema,
+  CreatePayoutBodySchema,
 } from "./schemas.js";
 
 export const stripeRouter = Router();
@@ -50,6 +55,9 @@ stripeRouter.post(
 // GET /api/v1/stripe/pk -> publishable key for initializing Connect embedded components
 stripeRouter.get("/pk", getPublishableKeyHandler);
 
+// GET /api/v1/stripe/balance -> connected account balance for current user
+stripeRouter.get("/balance", requireAuth, getMyBalanceHandler);
+
 // POST /api/v1/stripe/products -> create product on connected account using Stripe-Account header
 stripeRouter.post(
   "/products",
@@ -70,4 +78,20 @@ stripeRouter.post(
   "/payment-intents",
   validate(CreatePaymentIntentBodySchema),
   createPaymentIntentHandler
+);
+
+// GET /api/v1/stripe/payouts -> list payouts for current user's connected account
+stripeRouter.get(
+  "/payouts",
+  requireAuth,
+  validate(ListPayoutsQuerySchema, "query"),
+  listMyPayoutsHandler
+);
+
+// POST /api/v1/stripe/payouts -> create a payout on connected account (manual payouts only)
+stripeRouter.post(
+  "/payouts",
+  requireAuth,
+  validate(CreatePayoutBodySchema),
+  createMyPayoutHandler
 );

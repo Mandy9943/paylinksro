@@ -167,7 +167,7 @@ export default function Customers() {
                           {customer.payments}
                         </TableCell>
                         <TableCell className="text-sm text-slate-500 py-3">
-                          {formatDate(customer.createdAt)}
+                          {formatDate(customer.updatedAt)}
                         </TableCell>
                       </TableRow>
                     ))}

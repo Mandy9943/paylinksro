@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useStripeAccount } from "@/hooks/useStripeAccount";
-import { api } from "@/lib/api";
+import { useBalance } from "@/hooks/useAnalytics";
+import { usePayouts, useRequestPayout } from "@/hooks/usePayouts";
 import {
   loadConnectAndInitialize,
   type StripeConnectInstance,
@@ -27,40 +28,24 @@ import { useState } from "react";
 export default function Payouts() {
   // Removed react-query usage
 
-  const available: {
-    available: number;
-    processing?: number;
-    totalTransferred?: number;
-  } = {
-    available: 0,
-    processing: 0,
-    totalTransferred: 0,
+  const { data: bal } = useBalance();
+  const available = {
+    available: bal?.available ?? 0,
+    processing: (bal && (bal as { processing?: number }).processing) ?? 0,
+    totalTransferred: bal?.totalTransferred ?? 0,
   };
 
-  const bank: { accountName?: string; iban?: string; bankName?: string } = {};
+  // const bank: { accountName?: string; iban?: string; bankName?: string } = {};
 
-  const [accountName, setAccountName] = useState(bank?.accountName ?? "");
-  const [iban, setIban] = useState(bank?.iban ?? "");
-  const [bankName, setBankName] = useState(bank?.bankName ?? "");
+  // future: editable bank details if needed
+  // const [accountName, setAccountName] = useState(bank?.accountName ?? "");
+  // const [iban, setIban] = useState(bank?.iban ?? "");
+  // const [bankName, setBankName] = useState(bank?.bankName ?? "");
 
   // Stubs until API exists
-  const [savePending, setSavePending] = useState(false);
-  const [requestPending, setRequestPending] = useState(false);
-  const saveBank = {
-    isPending: savePending,
-    mutate: async (data: {
-      iban: string;
-      accountName: string;
-      bankName: string;
-    }) => {
-      try {
-        setSavePending(true);
-        void data; // TODO: call API
-      } finally {
-        setSavePending(false);
-      }
-    },
-  } as const;
+  // const [savePending, setSavePending] = useState(false);
+  // const [requestPending, setRequestPending] = useState(false);
+  // const saveBank = { /* future wiring */ } as const;
 
   // Onboarding modal state
   const [showModal, setShowModal] = useState(false);
@@ -75,9 +60,7 @@ export default function Payouts() {
     setLoadingConnect(true);
     setConnectError(null);
     try {
-      const { data: me } = await api.get(`/v1/stripe/accounts/me`);
-      const accountId: string = me.id;
-      const { data: pkRes } = await api.get(`/v1/stripe/pk`);
+  const { data: pkRes } = await (await import("@/lib/api")).api.get(`/v1/stripe/pk`);
       if (!pkRes?.publishableKey) {
         setConnectError("Cheia publică nu este configurată.");
         return;
@@ -85,11 +68,11 @@ export default function Payouts() {
       const instance = await loadConnectAndInitialize({
         publishableKey: pkRes.publishableKey,
         fetchClientSecret: async () => {
-          const { data: sess } = await api.post(
-            `/v1/stripe/accounts/${accountId}/account-session`,
-            {}
-          );
-          return sess.client_secret as string;
+          // We call a dedicated endpoint that creates an account session for the current user
+          const { data: me } = await (await import("@/lib/api")).api.get(`/v1/stripe/accounts/me`);
+          const accountId: string = me.id;
+          const { data: sess } = await (await import("@/lib/api")).api.post(`/v1/stripe/accounts/${accountId}/account-session`, {});
+          return (sess.client_secret as string) || "";
         },
         appearance: { overlays: "dialog" },
       });
@@ -101,17 +84,14 @@ export default function Payouts() {
       setLoadingConnect(false);
     }
   };
-  const requestPayout = {
-    isPending: requestPending,
-    mutate: async () => {
-      try {
-        setRequestPending(true);
-        // TODO: call API
-      } finally {
-        setRequestPending(false);
-      }
-    },
-  } as const;
+  const { request, isRequesting } = useRequestPayout();
+  const doRequestPayout = async () => {
+    if ((available?.available ?? 0) <= 0) return;
+    const amount = available.available; // major units (RON)
+    await request({ amount, currency: "ron" });
+  };
+
+  const { data: payouts } = usePayouts({ limit: 50 });
 
   return (
     <div className="space-y-6">
@@ -207,15 +187,42 @@ export default function Payouts() {
               <Button
                 variant="outline"
                 className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-                onClick={() => requestPayout.mutate()}
-                disabled={(available?.available ?? 0) <= 0}
+                onClick={doRequestPayout}
+                disabled={(available?.available ?? 0) <= 0 || isRequesting}
               >
-                Inițiază transfer manual
+                {isRequesting ? "Se trimite…" : "Inițiază transfer manual"}
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Payouts list */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Plăți efectuate</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {payouts && payouts.length > 0 ? (
+            <div className="divide-y">
+              {payouts.map((p) => (
+                <div key={p.id} className="flex items-center justify-between py-3 text-sm">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{(p.amountMinor / 100).toFixed(2)} {p.currency}</span>
+                    <span className="text-gray-500">{p.status.replace(/_/g, " ")}</span>
+                  </div>
+                  <div className="text-right text-gray-500">
+                    <div>{p.created ? new Date(p.created).toLocaleString() : "--"}</div>
+                    <div>Arrival: {p.arrivalDate ? new Date(p.arrivalDate).toLocaleDateString() : "--"}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">Nu există plăți efectuate încă.</div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Onboarding modal */}
       <Dialog open={showModal} onOpenChange={(o: boolean) => setShowModal(o)}>

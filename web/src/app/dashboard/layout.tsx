@@ -2,6 +2,7 @@
 import CreatePaymentLinkModal from "@/components/dashboard/CreatePaymentLinkModal/create-payment-link-modal";
 import Sidebar from "@/components/dashboard/sidebar";
 import { Button } from "@/components/ui/button";
+import { useBalance } from "@/hooks/useAnalytics";
 import { useAuth } from "@/hooks/useAuth";
 import { useStripeAccount } from "@/hooks/useStripeAccount";
 import { captureTokenFromHash } from "@/lib/api";
@@ -17,6 +18,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { isLoading: isStripeLoading, isOnboarded } = useStripeAccount();
+  const { data: balance } = useBalance();
   const [bootstrapped, setBootstrapped] = useState(false);
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const { openCreatePaymentLinkModal, toggleCreatePaymentLinkModal } =
@@ -111,7 +113,11 @@ const Layout = ({ children }: { children: ReactNode }) => {
               <div className="hidden sm:flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200/60">
                 <div className="text-xs font-medium">
                   Sold disponibil:{" "}
-                  <span className="font-semibold">1,245.67 RON</span>
+                  <span className="font-semibold">
+                    {balance
+                      ? `${balance.available.toFixed(2)} ${balance.currency}`
+                      : "0.00 RON"}
+                  </span>
                 </div>
               </div>
               <Button

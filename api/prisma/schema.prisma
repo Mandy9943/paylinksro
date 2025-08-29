@@ -28,6 +28,7 @@ model User {
     customers               Customer[]
     transactions            Transaction[]
     active                  Boolean          @default(true)
+    settings                UserSettings?
 }
 
 model MagicLinkToken {
@@ -144,9 +145,11 @@ model Transaction {
     customerId String?
     customer   Customer? @relation(fields: [customerId], references: [id])
 
-    amount   Int // minor units (bani)
-    currency String            @default("RON")
-    status   TransactionStatus
+    amount      Int // minor units (bani)
+    currency    String            @default("RON")
+    status      TransactionStatus
+    succeededAt DateTime?
+    disputedAt  DateTime?
 
     // Stripe references
     stripePaymentIntentId String? @unique
@@ -164,11 +167,43 @@ model Transaction {
     refundedAmount Int?
     refundedAt     DateTime?
 
+    // Net amount to seller (minor units)
+    netAmount Int?
+
+    // Dispute reference
+    stripeDisputeId String?
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     @@index([userId, createdAt])
+    @@index([userId, succeededAt])
     @@index([payLinkId, createdAt])
+}
+
+// ---------------------------
+// User Settings
+// ---------------------------
+
+enum PayoutInterval {
+    daily
+    weekly
+    monthly
+    manual
+}
+
+model UserSettings {
+    id                String         @id @default(cuid())
+    userId            String         @unique
+    user              User           @relation(fields: [userId], references: [id])
+
+    // Payments settings
+    autoPayouts       Boolean        @default(true)
+    payoutInterval    PayoutInterval @default(daily)
+    emailNotifications Boolean       @default(true)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 // Detailed info for service-type links

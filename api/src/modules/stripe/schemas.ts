@@ -29,6 +29,17 @@ export const CreatePaymentIntentBodySchema = z.object({
   applicationFeeAmount: z.coerce.number().int().nonnegative().optional(),
 });
 
+export const ListPayoutsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(50).optional(),
+  startingAfter: z.string().optional(),
+});
+
+export const CreatePayoutBodySchema = z.object({
+  amount: z.coerce.number().positive(), // major units (RON)
+  currency: z.string().default("ron"),
+  statementDescriptor: z.string().max(22).optional(),
+});
+
 export type AccountIdParam = z.infer<typeof AccountIdParamSchema>;
 export type CreateAccountSessionBody = z.infer<
   typeof CreateAccountSessionBodySchema
@@ -38,3 +49,5 @@ export type ListProductsQuery = z.infer<typeof ListProductsQuerySchema>;
 export type CreatePaymentIntentBody = z.infer<
   typeof CreatePaymentIntentBodySchema
 >;
+export type ListPayoutsQuery = z.infer<typeof ListPayoutsQuerySchema>;
+export type CreatePayoutBody = z.infer<typeof CreatePayoutBodySchema>;

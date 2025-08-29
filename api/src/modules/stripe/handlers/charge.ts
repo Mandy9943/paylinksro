@@ -16,11 +16,13 @@ export async function onChargeSucceeded(event: any) {
     (charge?.billing_details?.email as string | undefined) ||
     (charge?.receipt_email as string | undefined) ||
     null;
+  // Retrieve PI early to use metadata and timestamps
+  const pi = await retrievePIIfNeeded(charge);
   if (!paylinkId) {
-    const pi = await retrievePIIfNeeded(charge);
     paylinkId = (pi as any)?.metadata?.paylinkId as string | undefined;
   }
-  if (!paylinkId || !recipient) return;
+  // Proceed even if recipient is missing to ensure transactions are recorded
+  if (!paylinkId) return;
 
   const link = await findPayLinkBasic(paylinkId);
   if (!link) return;
@@ -33,6 +35,25 @@ export async function onChargeSucceeded(event: any) {
   }
   try {
     await upsertTransactionFromCharge(link, charge, amountMinor, customerId);
+    // Also update timestamps/net if available
+    const succeededAt = charge.created
+      ? new Date((charge.created as number) * 1000)
+      : new Date();
+    const createdAt = pi?.created
+      ? new Date((pi.created as number) * 1000)
+      : succeededAt;
+    const netMinor =
+      typeof charge.transfer?.amount === "number"
+        ? (charge.transfer.amount as number)
+        : undefined;
+    await prisma.transaction.updateMany({
+      where: { stripeChargeId: charge.id as string },
+      data: {
+        createdAt,
+        succeededAt,
+        netAmount: netMinor ?? undefined,
+      },
+    });
   } catch {
     // ignore
   }
@@ -74,20 +95,34 @@ export async function onChargeSucceeded(event: any) {
     }
   }
 
-  const subject = `Plată primită — ${link.name}`;
-  const amountRON = (amountMinor / 100).toFixed(2);
-  const html = `
-    <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
-      <h2>Mulțumim!</h2>
-      <p>Am primit plata de <strong>${amountRON} RON</strong> pentru <strong>${link.name}</strong>.</p>
-      ${extraHtml}
-      <p style="color:#64748b; font-size: 12px; margin-top: 24px;">Dacă aveți întrebări, răspundeți la acest email.</p>
-    </div>
-  `;
+  // Respect user's email notification setting
+  let shouldSendEmail = true;
   try {
-    await sendMail({ to: recipient, subject, html });
+    const pref = await prisma.userSettings.findUnique({
+      where: { userId: link.userId },
+      select: { emailNotifications: true },
+    });
+    shouldSendEmail = pref?.emailNotifications ?? true;
   } catch {
-    // ignore
+    // default stays true
+  }
+
+  if (recipient && shouldSendEmail) {
+    const subject = `Plată primită — ${link.name}`;
+    const amountRON = (amountMinor / 100).toFixed(2);
+    const html = `
+      <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+        <h2>Mulțumim!</h2>
+        <p>Am primit plata de <strong>${amountRON} RON</strong> pentru <strong>${link.name}</strong>.</p>
+        ${extraHtml}
+        <p style="color:#64748b; font-size: 12px; margin-top: 24px;">Dacă aveți întrebări, răspundeți la acest email.</p>
+      </div>
+    `;
+    try {
+      await sendMail({ to: recipient, subject, html });
+    } catch {
+      // ignore
+    }
   }
 }
 
@@ -106,8 +141,15 @@ export async function onChargeRefunded(event: any) {
 
 export async function onChargeDisputeCreated(event: any) {
   const dispute = event.data.object as any;
+  const when = dispute.created
+    ? new Date((dispute.created as number) * 1000)
+    : new Date();
   await prisma.transaction.updateMany({
     where: { stripeChargeId: dispute.charge as string },
-    data: { status: "DISPUTED" },
+    data: {
+      status: "DISPUTED",
+      disputedAt: when,
+      stripeDisputeId: (dispute.id as string) || undefined,
+    },
   });
 }

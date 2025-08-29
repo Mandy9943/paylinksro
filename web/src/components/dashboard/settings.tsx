@@ -4,10 +4,13 @@ import EmbeddedOnboarding from "@/app/dashboard/settings/embedded-onboarding";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { useStripeAccount } from "@/hooks/useStripeAccount";
 
 export default function Settings() {
   const { isOnboarded } = useStripeAccount();
+  const { data: settings } = useSettings();
+  const { update, isUpdating } = useUpdateSettings();
   return (
     <div className="max-w-4xl space-y-6">
       {/* Payment Settings */}
@@ -23,7 +26,11 @@ export default function Settings() {
                 Transfer zilnic automat
               </div>
             </div>
-            <Switch defaultChecked />
+            <Switch
+              checked={settings?.autoPayouts ?? true}
+              onCheckedChange={(v) => update({ autoPayouts: v })}
+              disabled={isUpdating}
+            />
           </div>
 
           <div className="flex items-center justify-between">
@@ -33,12 +40,17 @@ export default function Settings() {
                 Pentru fiecare tranzacție
               </div>
             </div>
-            <Switch />
+            <Switch
+              checked={settings?.emailNotifications ?? true}
+              onCheckedChange={(v) => update({ emailNotifications: v })}
+              disabled={isUpdating}
+            />
           </div>
 
           <Button
             variant="outline"
             className="w-full border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+            disabled={isUpdating}
           >
             Salvează setările
           </Button>
