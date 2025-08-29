@@ -155,6 +155,7 @@ export async function updatePayLink(
   if (typeof data.slug !== "undefined" && data.slug !== existing.slug) {
     next.slug = await ensureUniqueSlug(data.slug);
   }
+  const targetType = data.serviceType ?? existing.serviceType;
   if (data.priceType) {
     next.amount =
       data.priceType === "FIXED" ? data.amount ?? existing.amount ?? 0 : null;
@@ -187,6 +188,8 @@ export async function updatePayLink(
                   },
                 },
           }
+        : targetType !== "SERVICE" && existing.service
+        ? { service: { delete: true } }
         : {}),
       ...(data.product
         ? {
@@ -208,6 +211,8 @@ export async function updatePayLink(
                   },
                 },
           }
+        : targetType !== "DIGITAL_PRODUCT" && existing.product
+        ? { product: { delete: true } }
         : {}),
       ...(data.fundraising
         ? {
@@ -227,6 +232,8 @@ export async function updatePayLink(
                   },
                 },
           }
+        : targetType !== "FUNDRAISING" && existing.fundraising
+        ? { fundraising: { delete: true } }
         : {}),
     },
     include: { service: true, product: true, fundraising: true },
@@ -247,7 +254,7 @@ export async function deletePayLink(userId: string, id: string) {
 
 export async function findPublicPayLinkBySlug(slug: string) {
   return prisma.payLink.findFirst({
-    where: { slug },
+    where: { slug, active: true },
     select: {
       userId: true,
       id: true,
@@ -293,4 +300,77 @@ export async function findPublicPayLinkBySlug(slug: string) {
       },
     },
   });
+}
+
+export async function duplicatePayLink(userId: string, id: string) {
+  // Ensure ownership and fetch with relations
+  const existing = await prisma.payLink.findUnique({
+    where: { id },
+    include: { service: true, product: true, fundraising: true },
+  });
+  if (!existing || existing.userId !== userId) {
+    const e: any = new Error("Not found");
+    e.status = 404;
+    throw e;
+  }
+
+  const newSlug = await ensureUniqueSlug(existing.slug);
+  const newName = `${existing.name} (copy)`;
+
+  const created = await prisma.payLink.create({
+    data: {
+      userId,
+      name: newName,
+      slug: newSlug,
+      priceType: existing.priceType,
+      amount: existing.amount,
+      minAmount: existing.minAmount,
+      currency: existing.currency,
+      active: existing.active,
+      serviceType: existing.serviceType,
+      description: existing.description,
+      collectEmail: existing.collectEmail,
+      collectPhone: existing.collectPhone,
+      collectBillingAddress: existing.collectBillingAddress,
+      mainColor: existing.mainColor,
+      ...(existing.service
+        ? {
+            service: {
+              create: {
+                title: existing.service.title,
+                description: existing.service.description ?? undefined,
+                coverImageUrl: existing.service.coverImageUrl ?? undefined,
+              },
+            },
+          }
+        : {}),
+      ...(existing.product
+        ? {
+            product: {
+              create: {
+                name: existing.product.name,
+                description: existing.product.description ?? undefined,
+                assets: existing.product.assets as any,
+                coverImageUrl: existing.product.coverImageUrl ?? undefined,
+              },
+            },
+          }
+        : {}),
+      ...(existing.fundraising
+        ? {
+            fundraising: {
+              create: {
+                targetAmount: existing.fundraising.targetAmount ?? null,
+                // Reset progress for duplicated fundraising
+                currentRaised: 0,
+                coverImageUrl: existing.fundraising.coverImageUrl ?? undefined,
+              },
+            },
+          }
+        : {}),
+    },
+    include: { service: true, product: true, fundraising: true },
+  });
+
+  return created as any;
 }

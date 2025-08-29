@@ -1,7 +1,9 @@
 "use client";
 
+import { revalidatePaymentLink } from "@/actions/revalidate-paymentlink-action";
 import {
   deletePayLink as apiDelete,
+  duplicatePayLink as apiDuplicate,
   updatePayLink as apiUpdate,
   type PayLink,
 } from "@/api/paylinks";
@@ -36,6 +38,7 @@ import useUiStore from "@/store/ui-store";
 import { Copy, Edit, Eye, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import EditPaymentLinkModal from "./EditPaymentLinkModal/edit-payment-link-modal";
 
 export default function PaymentLinks() {
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
@@ -44,8 +47,10 @@ export default function PaymentLinks() {
   const [renameValue, setRenameValue] = useState("");
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renamePending, setRenamePending] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editLink, setEditLink] = useState<PayLink | null>(null);
 
-  const { items: data, isLoading, mutate, refresh } = usePayLinks();
+  const { items: data, isLoading, mutate } = usePayLinks();
 
   const copyUrl = async (slug: string) => {
     const url = `${window.location.origin}/p/${slug}`;
@@ -87,7 +92,17 @@ export default function PaymentLinks() {
     }
   };
 
-  const onDuplicate = async () => {};
+  const onDuplicate = async (link: PayLink) => {
+    try {
+      const created = await apiDuplicate(link.id);
+      await mutate((prev) => [created, ...(prev ?? [])], {
+        revalidate: false,
+      });
+      toast.success("Duplicat");
+    } catch {
+      toast.error("Nu s-a putut duplica");
+    }
+  };
 
   const onToggleActive = async (link: PayLink) => {
     try {
@@ -99,6 +114,7 @@ export default function PaymentLinks() {
           ),
         { revalidate: false }
       );
+      revalidatePaymentLink(link.slug);
     } catch {
       toast.error("Nu s-a putut actualiza statusul");
     }
@@ -111,6 +127,7 @@ export default function PaymentLinks() {
         revalidate: false,
       });
       toast.success("Șters");
+      revalidatePaymentLink(link.slug);
     } catch {
       toast.error("Nu s-a putut șterge");
     }
@@ -249,7 +266,17 @@ export default function PaymentLinks() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="flex items-center text-xs py-2"
-                                onSelect={() => onDuplicate()}
+                                onSelect={() => {
+                                  setEditLink(link);
+                                  setEditOpen(true);
+                                }}
+                              >
+                                <Edit className="mr-2 h-3.5 w-3.5" />
+                                Editează detalii
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="flex items-center text-xs py-2"
+                                onSelect={() => onDuplicate(link)}
                               >
                                 <Copy className="mr-2 h-3.5 w-3.5" />
                                 Duplică
@@ -280,6 +307,21 @@ export default function PaymentLinks() {
           )}
         </CardContent>
       </Card>
+      {editOpen && (
+        <EditPaymentLinkModal
+          isOpen={editOpen}
+          onClose={() => setEditOpen(false)}
+          link={editLink}
+          onUpdated={async (updated) => {
+            await mutate(
+              (prev) =>
+                (prev ?? []).map((p) => (p.id === updated.id ? updated : p)),
+              { revalidate: false }
+            );
+            toast.success("Actualizat");
+          }}
+        />
+      )}
 
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
         <DialogContent>

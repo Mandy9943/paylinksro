@@ -26,7 +26,7 @@ export function TypeSelect() {
             onValueChange={(v: PaymentLinkType) => field.onChange(v)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue />
+              <SelectValue placeholder="Alege tipul" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="servicii">Servicii</SelectItem>

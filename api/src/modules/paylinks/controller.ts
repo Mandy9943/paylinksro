@@ -10,6 +10,7 @@ import {
 import {
   createPayLink,
   deletePayLink,
+  duplicatePayLink,
   findPublicPayLinkBySlug,
   listPayLinks,
   updatePayLink,
@@ -132,6 +133,31 @@ export async function deleteCtrl(req: any, res: Response, next: NextFunction) {
     const { id } = req.params;
     const result = await deletePayLink(req.user.id, id);
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function duplicateCtrl(
+  req: any,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { id } = req.params;
+    const created: any = await duplicatePayLink(req.user.id, id);
+    res.status(201).json({
+      ...created,
+      amount: toRON(created.amount),
+      minAmount: toRON((created as any).minAmount),
+      fundraising: created.fundraising
+        ? {
+            ...created.fundraising,
+            targetAmount: toRON(created.fundraising.targetAmount),
+            currentRaised: toRON(created.fundraising.currentRaised),
+          }
+        : null,
+    });
   } catch (err) {
     next(err);
   }
