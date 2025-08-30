@@ -1,7 +1,7 @@
 "use client";
+import { api } from "@/lib/api";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import { api } from "@/lib/api";
 
 export type PayoutItem = {
   id: string;
@@ -41,8 +41,11 @@ export function usePayouts(params?: { limit?: number }) {
 export function useRequestPayout() {
   const { trigger, isMutating } = useSWRMutation(
     `/v1/stripe/payouts`,
-    async (url: string, { arg }: { arg: { amount: number; currency?: string; statementDescriptor?: string } }) => {
-      const { data } = await api.post(url, arg);
+    async (
+      url: string,
+      { arg }: { arg?: { currency?: string; statementDescriptor?: string } }
+    ) => {
+      const { data } = await api.post(url, arg ?? {});
       return data;
     }
   );

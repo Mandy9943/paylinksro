@@ -24,16 +24,19 @@ import {
 } from "@stripe/react-connect-js";
 import { Building2, Clock, TrendingUp, Wallet } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Payouts() {
   // Removed react-query usage
 
   const { data: bal } = useBalance();
   const available = {
-    available: (bal?.available ?? 0) + (bal?.pending ?? 0),
+    available: bal?.available ?? 0, // only available, not pending
+    pending: bal?.pending ?? 0,
     processing: (bal && (bal as { processing?: number }).processing) ?? 0,
     totalTransferred: bal?.totalTransferred ?? 0,
   };
+  const minPayout = 5; // RON
 
   // Onboarding modal state
   const [showModal, setShowModal] = useState(false);
@@ -42,7 +45,11 @@ export default function Payouts() {
   const [loadingConnect, setLoadingConnect] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
   const { refresh: refreshAuth } = useAuth();
-  const { refresh: refreshStripe } = useStripeAccount();
+  const {
+    isOnboarded,
+    isLoading: loadingAccount,
+    refresh: refreshStripe,
+  } = useStripeAccount();
 
   const startOnboarding = async () => {
     setLoadingConnect(true);
@@ -80,9 +87,66 @@ export default function Payouts() {
   };
   const { request, isRequesting } = useRequestPayout();
   const doRequestPayout = async () => {
-    if ((available?.available ?? 0) <= 0) return;
-    const amount = available.available; // major units (RON)
-    await request({ amount, currency: "ron" });
+    const avail = available?.available ?? 0;
+    if (avail < minPayout) {
+      toast.error(
+        `Sold insuficient pentru transfer. Minim ${minPayout.toFixed(
+          2
+        )} RON. Disponibil: ${avail.toFixed(2)} RON$${
+          available.pending > 0
+            ? `, În curs: ${available.pending.toFixed(2)} RON`
+            : ""
+        }`
+      );
+      return;
+    }
+    try {
+      await request({ currency: "ron" });
+    } catch (e: unknown) {
+      const err = e as {
+        response?: { data?: { error?: { message?: string } } };
+        message?: string;
+      };
+      const msg =
+        err?.response?.data?.error?.message || err?.message || String(e);
+      // If backend says not onboarded, open modal
+      if (
+        typeof msg === "string" &&
+        msg.toLowerCase().includes("not onboarded")
+      ) {
+        setConnectError(
+          "Trebuie să finalizezi configurarea contului înainte de a retrage fonduri."
+        );
+        setShowModal(true);
+        return;
+      }
+      // If backend returns insufficient funds, show server-provided details
+      const details = (
+        err as { response?: { data?: { error?: { details?: unknown } } } }
+      ).response?.data?.error?.details as
+        | { available?: number; pending?: number }
+        | undefined;
+      if (details && typeof details === "object") {
+        const availSrv =
+          typeof details.available === "number" ? details.available : undefined;
+        const pendSrv =
+          typeof details.pending === "number" ? details.pending : undefined;
+        toast.error(
+          `Sold insuficient pentru transfer. Minim ${minPayout.toFixed(
+            2
+          )} RON. Disponibil: ${
+            (availSrv ?? avail).toFixed?.(2) ?? String(availSrv ?? avail)
+          } RON${
+            typeof pendSrv === "number" && pendSrv > 0
+              ? `, În curs: ${pendSrv.toFixed?.(2) ?? pendSrv} RON`
+              : ""
+          }`
+        );
+        return;
+      }
+      setConnectError(msg);
+      setShowModal(true);
+    }
   };
 
   const { data: payouts } = usePayouts({ limit: 50 });
@@ -100,7 +164,9 @@ export default function Payouts() {
               <Wallet className="h-5 w-5 text-green-600" />
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              {available ? `${available.available.toFixed(2)} RON` : "0,00 RON"}
+              {available
+                ? `${(available.available + available.pending).toFixed(2)} RON`
+                : "0,00 RON"}
             </div>
             <p className="text-sm text-gray-500">
               Fonduri eligibile pentru payout
@@ -154,8 +220,16 @@ export default function Payouts() {
             <Button
               className="mt-2"
               onClick={() => {
-                setShowModal(true);
+                if (!isOnboarded) {
+                  setShowModal(true);
+                } else {
+                  void doRequestPayout();
+                }
               }}
+              disabled={
+                loadingAccount ||
+                (isOnboarded && (available?.available ?? 0) < minPayout)
+              }
             >
               Retrage fonduri
             </Button>
@@ -181,8 +255,17 @@ export default function Payouts() {
               <Button
                 variant="outline"
                 className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-                onClick={doRequestPayout}
-                disabled={(available?.available ?? 0) <= 0 || isRequesting}
+                onClick={() => {
+                  if (!isOnboarded) {
+                    setShowModal(true);
+                    return;
+                  }
+                  void doRequestPayout();
+                }}
+                disabled={
+                  (isOnboarded && (available?.available ?? 0) < minPayout) ||
+                  isRequesting
+                }
               >
                 {isRequesting ? "Se trimite…" : "Inițiază transfer manual"}
               </Button>

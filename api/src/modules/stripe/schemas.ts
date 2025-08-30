@@ -34,11 +34,13 @@ export const ListPayoutsQuerySchema = z.object({
   startingAfter: z.string().optional(),
 });
 
-export const CreatePayoutBodySchema = z.object({
-  amount: z.coerce.number().positive(), // major units (RON)
-  currency: z.string().default("ron"),
-  statementDescriptor: z.string().max(22).optional(),
-});
+export const CreatePayoutBodySchema = z
+  .object({
+    // Server computes amount from available balance; client may optionally suggest currency/descriptor
+    currency: z.string().default("ron").optional(),
+    statementDescriptor: z.string().max(22).optional(),
+  })
+  .default({});
 
 export type AccountIdParam = z.infer<typeof AccountIdParamSchema>;
 export type CreateAccountSessionBody = z.infer<

@@ -13,11 +13,11 @@ import {
   createAccountSession,
   createConnectedAccount,
   createPaymentIntentConnected,
+  createPayoutOnConnected,
   createProductOnConnected,
   ensureUserConnectedAccount,
   getConnectedBalanceSummary,
   listPayoutsConnected,
-  createPayoutOnConnected,
   listProductsConnected,
   retrieveAccount,
 } from "./service.js";
@@ -148,23 +148,57 @@ export async function createMyPayoutHandler(req: Request, res: Response) {
   const auth = (req as any).user as { id: string };
   const dbUser = await prisma.user.findUnique({
     where: { id: auth.id },
-    select: { stripeAccountId: true },
+    select: { stripeAccountId: true, onboardedAt: true },
   });
   const accountId = dbUser?.stripeAccountId;
   if (!accountId)
     return res.status(400).json({ error: { message: "No connected account" } });
 
+  // Verify account is onboarded and payouts enabled in Stripe
+  try {
+    const acct = await retrieveAccount(accountId);
+    const payoutsEnabled = !!(acct as any).payouts_enabled;
+    const detailsSubmitted = !!(acct as any).details_submitted;
+    if (!payoutsEnabled || !detailsSubmitted || !dbUser?.onboardedAt) {
+      return res
+        .status(400)
+        .json({ error: { message: "Account not onboarded for payouts" } });
+    }
+  } catch (e) {
+    return res
+      .status(400)
+      .json({ error: { message: "Unable to verify account status" } });
+  }
+
   const body = (req as any).validated?.body as {
-    amount: number;
     currency?: string;
     statementDescriptor?: string;
   };
-  // amount provided in major units (RON)
-  const amountMinor = Math.floor(Math.max(0.5, body.amount) * 100);
+  // Compute available from Stripe balance, enforce min 5 RON
+  const summary = await getConnectedBalanceSummary(accountId);
+  const availableMinor = summary.availableMinor;
+  const pendingMinor = summary.pendingMinor;
+  const MIN_MINOR = 5 * 100;
+  if (!availableMinor || availableMinor < MIN_MINOR) {
+    return res.status(400).json({
+      error: {
+        message: "Insufficient available balance for payout (min 5 RON)",
+        code: "INSUFFICIENT_FUNDS",
+        details: {
+          availableMinor,
+          available: Math.round((availableMinor / 100) * 100) / 100,
+          pendingMinor,
+          pending: Math.round((pendingMinor / 100) * 100) / 100,
+          currency: summary.currency,
+          minRequired: 5,
+        },
+      },
+    });
+  }
   const payout = await createPayoutOnConnected(accountId, {
-    amountMinor,
-    currency: body.currency,
-    statementDescriptor: body.statementDescriptor,
+    amountMinor: availableMinor,
+    currency: body?.currency,
+    statementDescriptor: body?.statementDescriptor,
   });
   res.json({ payout });
 }
