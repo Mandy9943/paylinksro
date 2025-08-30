@@ -1,5 +1,5 @@
-import { prisma } from "../../lib/prisma.js";
 import { FEES } from "../../config/fees.js";
+import { prisma } from "../../lib/prisma.js";
 import type { CreatePayLinkInput, UpdatePayLinkInput } from "./schemas.js";
 
 // Generate a human-friendly unique slug by appending a numeric suffix when needed
@@ -80,14 +80,18 @@ export async function createPayLink(userId: string, data: CreatePayLinkInput) {
   if (data.priceType === "FIXED") {
     const a = data.amount ?? 0;
     if (a * 100 < FEES.MIN_TRANSACTION_RON * 100) {
-      const e: any = new Error(`Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`);
+      const e: any = new Error(
+        `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`
+      );
       e.status = 400;
       throw e;
     }
   } else if (data.priceType === "FLEXIBLE") {
     const min = (data as any).minAmount ?? 0;
     if (min && min * 100 < FEES.MIN_TRANSACTION_RON * 100) {
-      const e: any = new Error(`Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`);
+      const e: any = new Error(
+        `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`
+      );
       e.status = 400;
       throw e;
     }
@@ -177,7 +181,9 @@ export async function updatePayLink(
     // Validate minimums against new values if provided
     if (data.priceType === "FIXED" && typeof data.amount === "number") {
       if (data.amount * 100 < FEES.MIN_TRANSACTION_RON * 100) {
-        const e: any = new Error(`Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`);
+        const e: any = new Error(
+          `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`
+        );
         e.status = 400;
         throw e;
       }
@@ -188,7 +194,9 @@ export async function updatePayLink(
       (data as any).minAmount! > 0 &&
       (data as any).minAmount! * 100 < FEES.MIN_TRANSACTION_RON * 100
     ) {
-      const e: any = new Error(`Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`);
+      const e: any = new Error(
+        `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`
+      );
       e.status = 400;
       throw e;
     }

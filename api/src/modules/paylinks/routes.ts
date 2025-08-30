@@ -10,7 +10,11 @@ import {
   publicGetBySlugCtrl,
   updateCtrl,
 } from "./controller.js";
-import { createPayLinkSchema, updatePayLinkSchema } from "./schemas.js";
+import {
+  createPayLinkSchema,
+  createPublicPaymentIntentSchema,
+  updatePayLinkSchema,
+} from "./schemas.js";
 
 export const payLinksRouter = Router();
 
@@ -18,6 +22,7 @@ export const payLinksRouter = Router();
 payLinksRouter.get("/public/:slug", publicGetBySlugCtrl);
 payLinksRouter.post(
   "/public/:slug/payment-intents",
+  validate(createPublicPaymentIntentSchema),
   publicCreatePaymentIntentCtrl
 );
 

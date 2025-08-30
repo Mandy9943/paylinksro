@@ -33,11 +33,7 @@ describe("Admin: revoke and disable user", () => {
     await prisma.magicLinkToken.deleteMany({
       where: { email: { in: [ADMIN_EMAIL, USER_EMAIL] } },
     });
-    await prisma.session
-      .deleteMany({
-        where: { user: { email: { in: [ADMIN_EMAIL, USER_EMAIL] } } },
-      })
-      .catch(() => {});
+
     await prisma.user.deleteMany({
       where: { email: { in: [ADMIN_EMAIL, USER_EMAIL] } },
     });

@@ -27,7 +27,8 @@ export function monthStartUTC(d: Date = new Date()): Date {
 export function calcBaseApplicationFeeMinor(amountMinor: number): number {
   const percent = Math.floor(amountMinor * FEES.PERCENT_FEE);
   const isLow = amountMinor <= FEES.FIXED_FEE_THRESHOLD_RON * 100;
-  const fixed = (isLow ? FEES.FIXED_FEE_LOW_RON : FEES.FIXED_FEE_HIGH_RON) * 100;
+  const fixed =
+    (isLow ? FEES.FIXED_FEE_LOW_RON : FEES.FIXED_FEE_HIGH_RON) * 100;
   return Math.max(0, percent + fixed);
 }
 
@@ -37,7 +38,8 @@ export function splitBaseApplicationFeeMinor(amountMinor: number): {
 } {
   const percentMinor = Math.floor(amountMinor * FEES.PERCENT_FEE);
   const isLow = amountMinor <= FEES.FIXED_FEE_THRESHOLD_RON * 100;
-  const fixedMinor = (isLow ? FEES.FIXED_FEE_LOW_RON : FEES.FIXED_FEE_HIGH_RON) * 100;
+  const fixedMinor =
+    (isLow ? FEES.FIXED_FEE_LOW_RON : FEES.FIXED_FEE_HIGH_RON) * 100;
   return { percentMinor, fixedMinor };
 }
 

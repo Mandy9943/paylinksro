@@ -1,6 +1,9 @@
+import {
+  monthStartUTC,
+  splitBaseApplicationFeeMinor,
+} from "../../../config/fees.js";
 import { prisma } from "../../../lib/prisma.js";
 import { presignGetUrl } from "../../../lib/r2.js";
-import { splitBaseApplicationFeeMinor, monthStartUTC } from "../../../config/fees.js";
 import { sendMail } from "../../../services/mailer.js";
 import {
   findPayLinkBasic,
@@ -49,16 +52,16 @@ export async function onChargeSucceeded(event: any) {
       typeof charge.transfer?.amount === "number"
         ? (charge.transfer.amount as number)
         : undefined;
-  const split = splitBaseApplicationFeeMinor(amountMinor);
-  await prisma.transaction.updateMany({
+    const split = splitBaseApplicationFeeMinor(amountMinor);
+    await prisma.transaction.updateMany({
       where: { stripeChargeId: charge.id as string },
       data: {
         createdAt,
         succeededAt,
         netAmount: netMinor ?? undefined,
-    appFeePercent: split.percentMinor,
-    appFeeFixed: split.fixedMinor,
-    appFeeMonthly: metaMonthly || undefined,
+        appFeePercent: split.percentMinor,
+        appFeeFixed: split.fixedMinor,
+        appFeeMonthly: metaMonthly || undefined,
       },
     });
     // Accrue the monthly active fee portion as collected for the current month

@@ -16,14 +16,8 @@ const createPayLinkBase = z.object({
     .min(1)
     .regex(/^[a-z0-9-]+$/),
   priceType: priceTypeEnum,
-  amount: z.coerce
-    .number()
-    .nonnegative()
-    .optional(), // RON, converted to bani server-side
-  minAmount: z.coerce
-    .number()
-    .nonnegative()
-    .optional(), // RON, converted to bani server-side (flexible)
+  amount: z.coerce.number().nonnegative().optional(), // RON, converted to bani server-side
+  minAmount: z.coerce.number().nonnegative().optional(), // RON, converted to bani server-side (flexible)
   currency: z.string().default("RON").optional(),
   active: z.boolean().optional(),
   serviceType: serviceTypeEnum,
@@ -60,7 +54,10 @@ const createPayLinkBase = z.object({
 
 export const createPayLinkSchema = createPayLinkBase.superRefine((val, ctx) => {
   if (val.priceType === "FIXED") {
-    if (val.amount == null || val.amount * 100 < FEES.MIN_TRANSACTION_RON * 100) {
+    if (
+      val.amount == null ||
+      val.amount * 100 < FEES.MIN_TRANSACTION_RON * 100
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["amount"],

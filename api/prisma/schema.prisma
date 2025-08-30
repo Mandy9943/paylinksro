@@ -12,22 +12,22 @@ datasource db {
 }
 
 model User {
-    id                      String           @id @default(cuid())
-    email                   String           @unique
-    role                    Role             @default(USER)
-    tokenVersion            Int              @default(0)
-    stripeAccountId         String?          @unique
+    id                      String              @id @default(cuid())
+    email                   String              @unique
+    role                    Role                @default(USER)
+    tokenVersion            Int                 @default(0)
+    stripeAccountId         String?             @unique
     onboardedAt             DateTime?
     stripeAccountStatusJson String?
     disabledAt              DateTime?
-    createdAt               DateTime         @default(now())
-    updatedAt               DateTime         @updatedAt
+    createdAt               DateTime            @default(now())
+    updatedAt               DateTime            @updatedAt
     // Later: profile fields, roles, etc
     magicTokens             MagicLinkToken[]
     payLinks                PayLink[]
     customers               Customer[]
     transactions            Transaction[]
-    active                  Boolean          @default(true)
+    active                  Boolean             @default(true)
     settings                UserSettings?
     monthlyFeeAccruals      MonthlyFeeAccrual[]
 }
@@ -191,16 +191,16 @@ model Transaction {
 // ---------------------------
 
 model MonthlyFeeAccrual {
-    id        String   @id @default(cuid())
-    userId    String
-    user      User     @relation(fields: [userId], references: [id])
-    month     DateTime // normalized to first day of the month UTC
+    id                String   @id @default(cuid())
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    month             DateTime // normalized to first day of the month UTC
     // How much of the monthly active fee has been collected so far (minor units)
-    collected Int      @default(0)
+    collected         Int      @default(0)
     // Optional stripe payment intent or charge that last contributed
     lastTransactionId String?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
 
     @@unique([userId, month])
     @@index([userId, month])

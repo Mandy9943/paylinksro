@@ -1,6 +1,4 @@
 import { type NextFunction, type Response } from "express";
-import { prisma } from "../../lib/prisma.js";
-import { getStripe } from "../../lib/stripe.js";
 import {
   BANI,
   FEES,
@@ -9,6 +7,8 @@ import {
   monthStartUTC,
   monthlyFeeMinor,
 } from "../../config/fees.js";
+import { prisma } from "../../lib/prisma.js";
+import { getStripe } from "../../lib/stripe.js";
 import {
   createPayLinkSchema,
   createPublicPaymentIntentSchema,
@@ -58,14 +58,22 @@ export async function createCtrl(req: any, res: Response, next: NextFunction) {
       if ((parsed.amount ?? 0) * 100 < minTransactionMinor()) {
         return res
           .status(400)
-          .json({ error: { message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON` } });
+          .json({
+            error: {
+              message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+            },
+          });
       }
     } else if (parsed.priceType === "FLEXIBLE") {
       const minA = (parsed as any).minAmount ?? 0;
       if (minA && minA * 100 < minTransactionMinor()) {
         return res
           .status(400)
-          .json({ error: { message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON` } });
+          .json({
+            error: {
+              message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+            },
+          });
       }
     }
     const created = await createPayLink(req.user.id, {
@@ -109,11 +117,18 @@ export async function updateCtrl(req: any, res: Response, next: NextFunction) {
     const { id } = req.params;
     const parsed = updatePayLinkSchema.parse(req.validated?.body ?? req.body);
     // Validate minimum amount on update if provided
-    if (parsed.priceType === "FIXED" && typeof (parsed as any).amount === "number") {
+    if (
+      parsed.priceType === "FIXED" &&
+      typeof (parsed as any).amount === "number"
+    ) {
       if ((parsed as any).amount * 100 < minTransactionMinor()) {
         return res
           .status(400)
-          .json({ error: { message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON` } });
+          .json({
+            error: {
+              message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+            },
+          });
       }
     }
     if (
@@ -124,7 +139,11 @@ export async function updateCtrl(req: any, res: Response, next: NextFunction) {
     ) {
       return res
         .status(400)
-        .json({ error: { message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON` } });
+        .json({
+          error: {
+            message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+          },
+        });
     }
     const updated = await updatePayLink(req.user.id, id, {
       ...parsed,
@@ -281,10 +300,14 @@ export async function publicCreatePaymentIntentCtrl(
     if ((amountMinor ?? 0) < minTransactionMinor()) {
       return res
         .status(400)
-        .json({ error: { message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON` } });
+        .json({
+          error: {
+            message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+          },
+        });
     }
     // Compute base application fee (percent + fixed tiered)
-  const baseFee = calcBaseApplicationFeeMinor(amountMinor!);
+    const baseFee = calcBaseApplicationFeeMinor(amountMinor!);
     // Add monthly active fee (charge once per month per seller, allow partial across tx)
     const mStart = monthStartUTC(new Date());
     const accrual = await prisma.monthlyFeeAccrual.findUnique({
@@ -293,9 +316,9 @@ export async function publicCreatePaymentIntentCtrl(
     });
     const monthlyTarget = monthlyFeeMinor();
     const already = accrual?.collected ?? 0;
-  const remaining = Math.max(0, monthlyTarget - already);
-  const capForMonthly = Math.max(0, amountMinor! - baseFee);
-  const monthlyToCharge = Math.min(remaining, capForMonthly); // ensure app fee <= amount
+    const remaining = Math.max(0, monthlyTarget - already);
+    const capForMonthly = Math.max(0, amountMinor! - baseFee);
+    const monthlyToCharge = Math.min(remaining, capForMonthly); // ensure app fee <= amount
     const applicationFeeAmount = baseFee + monthlyToCharge;
     // Create a destination charge on the platform account and transfer funds to the seller
     const intent = await stripe.paymentIntents.create({
