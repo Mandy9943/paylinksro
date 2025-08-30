@@ -24,23 +24,24 @@ export default function CreatePaymentLinkModal({
   onClose,
 }: CreatePaymentLinkModalProps) {
   const { mutate } = usePayLinks();
+  const defaultValues: CreatePaymentLinkFormValues = {
+    type: "servicii",
+    name: "",
+    description: "",
+    priceType: "fixed",
+    amount: 0,
+    minAmount: null,
+    collectEmail: true,
+    collectPhone: false,
+    collectBillingAddress: false,
+    mainColor: "#fbbf24",
+    productAssetUrls: [],
+    productCoverImageUrl: null,
+    fundraisingCoverImageUrl: null,
+    targetAmount: 1000,
+  };
   const form = useForm<CreatePaymentLinkFormValues>({
-    defaultValues: {
-      type: "servicii",
-      name: "",
-      description: "",
-      priceType: "fixed",
-      amount: 0,
-      minAmount: null,
-      collectEmail: true,
-      collectPhone: false,
-      collectBillingAddress: false,
-      mainColor: "#fbbf24",
-      productAssetUrls: [],
-      productCoverImageUrl: null,
-      fundraisingCoverImageUrl: null,
-      targetAmount: 1000,
-    },
+    defaultValues,
     mode: "onChange",
     resolver: zodResolver(
       createPaymentLinkSchema
@@ -110,6 +111,12 @@ export default function CreatePaymentLinkModal({
     try {
       await createPayLink(payload);
       mutate();
+      // Reset the form so the modal starts fresh next time it's opened
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("hasCreatedPayLink", "1");
+        } catch {}
+      }
       onClose();
     } catch (e) {
       console.error(e);
@@ -127,7 +134,9 @@ export default function CreatePaymentLinkModal({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onClose}
+              onClick={() => {
+                onClose();
+              }}
               className="text-gray-400 hover:text-gray-600"
             >
               <X className="h-4 w-4" />

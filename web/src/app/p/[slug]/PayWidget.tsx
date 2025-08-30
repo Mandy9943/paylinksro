@@ -231,10 +231,10 @@ function PaymentForm({
             ✓
           </div>
           <div>
-            <div className="font-medium">Thanks for your purchase!</div>
+            <div className="font-medium">Mulțumim pentru achiziție!</div>
             <div className="text-sm text-green-900/80">
-              Your payment was successful. A confirmation will be sent if an
-              email was provided.
+              Plata a fost efectuată cu succes. Dacă ați furnizat o adresă de
+              email, veți primi o confirmare.
             </div>
           </div>
         </div>

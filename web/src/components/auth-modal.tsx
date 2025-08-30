@@ -43,26 +43,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       .finally(() => setSubmitting(false));
   };
 
-  const handleResend = () => {
-    if (submitting || cooldown > 0) return;
-    setSubmitting(true);
-    setErrorMsg(null);
-    requestMagicLink(email)
-      .then(() => {
-        setCooldown(30);
-      })
-      .catch((error: unknown) => {
-        const description =
-          error instanceof Error
-            ? error.message
-            : typeof error === "string"
-            ? error
-            : "A apărut o eroare";
-        setErrorMsg(description);
-      })
-      .finally(() => setSubmitting(false));
-  };
-
   useEffect(() => {
     if (cooldown <= 0) return;
     const id = setTimeout(() => {
@@ -105,21 +85,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <p className="text-gray-600 mb-6">
                 Ți-am trimis un link de autentificare{" "}
                 {email ? `pe ${email}` : ""}.<br />
-                Deschide emailul și urmează instrucțiunile pentru a continua.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button className="paylink-button-primary" onClick={onClose}>
-                  Am înțeles
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={submitting || cooldown > 0}
-                  onClick={handleResend}
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  {cooldown > 0
-                    ? `Trimite din nou (${cooldown}s)`
-                    : "Trimite din nou"}
+                <Button asChild className="paylink-button-primary">
+                  <a
+                    href="https://mail.google.com/mail/?tab=rm&authuser=0&ogbl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Open Email
+                  </a>
                 </Button>
               </div>
               <p className="text-xs text-gray-500 mt-4">

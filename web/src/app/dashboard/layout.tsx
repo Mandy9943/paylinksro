@@ -4,6 +4,7 @@ import Sidebar from "@/components/dashboard/sidebar";
 import { Button } from "@/components/ui/button";
 import { useBalance } from "@/hooks/useAnalytics";
 import { useAuth } from "@/hooks/useAuth";
+import { usePayLinks } from "@/hooks/usePayLinks";
 import { useStripeAccount } from "@/hooks/useStripeAccount";
 import { captureTokenFromHash } from "@/lib/api";
 import useUiStore from "@/store/ui-store";
@@ -21,8 +22,10 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const { data: balance } = useBalance();
   const [bootstrapped, setBootstrapped] = useState(false);
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
+  const [createdLinkFlag, setCreatedLinkFlag] = useState(false);
   const { openCreatePaymentLinkModal, toggleCreatePaymentLinkModal } =
     useUiStore();
+  const { items: paylinks } = usePayLinks();
 
   // Ensure we capture token from URL fragment before auth check
   useEffect(() => {
@@ -35,6 +38,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
     if (typeof window === "undefined") return;
     const dismissed = localStorage.getItem("onboardingBannerDismissed");
     setShowOnboardingBanner(dismissed !== "1");
+    const created = localStorage.getItem("hasCreatedPayLink");
+    setCreatedLinkFlag(created === "1");
   }, []);
 
   useEffect(() => {
@@ -131,45 +136,48 @@ const Layout = ({ children }: { children: ReactNode }) => {
               </Button>
             </div>
           </div>
-          {!isOnboarded && showOnboardingBanner && (
-            <div className="mt-3">
-              <div className="relative flex items-center gap-3 rounded-lg border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2 text-amber-900">
-                <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
-                <div className="flex-1 text-sm font-medium tracking-wide">
-                  PENTRU A ÎNCEPE SĂ ACCEPȚI PLĂȚI, AVEM NEVOIE DE MAI MULTE
-                  INFORMAȚII.
+          {!isOnboarded &&
+            showOnboardingBanner &&
+            (createdLinkFlag || (paylinks?.length ?? 0) > 0) && (
+              <div className="mt-3">
+                <div className="relative flex items-center gap-3 rounded-lg border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2 text-amber-900">
+                  <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+                  <div className="flex-1 text-sm font-medium tracking-wide">
+                    PENTRU A ÎNCEPE SĂ ACCEPȚI PLĂȚI, AVEM NEVOIE DE MAI MULTE
+                    INFORMAȚII.
+                  </div>
+                  <Link
+                    href="/dashboard/settings#onboarding"
+                    className="inline-flex items-center rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-700 transition-colors"
+                  >
+                    Configurează plățile
+                  </Link>
+                  <button
+                    aria-label="Închide"
+                    className="absolute right-2 top-2 text-amber-700/70 hover:text-amber-900"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("onboardingBannerDismissed", "1");
+                      }
+                      setShowOnboardingBanner(false);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <Link
-                  href="/dashboard/settings#onboarding"
-                  className="inline-flex items-center rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-700 transition-colors"
-                >
-                  Configurează plățile
-                </Link>
-                <button
-                  aria-label="Închide"
-                  className="absolute right-2 top-2 text-amber-700/70 hover:text-amber-900"
-                  onClick={() => {
-                    if (typeof window !== "undefined") {
-                      localStorage.setItem("onboardingBannerDismissed", "1");
-                    }
-                    setShowOnboardingBanner(false);
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </button>
               </div>
-            </div>
-          )}
+            )}
         </header>
 
         {/* Section Content */}
         <main className="p-4 lg:p-6">{children}</main>
       </div>
-
-      <CreatePaymentLinkModal
-        isOpen={openCreatePaymentLinkModal}
-        onClose={toggleCreatePaymentLinkModal}
-      />
+      {openCreatePaymentLinkModal && (
+        <CreatePaymentLinkModal
+          isOpen={openCreatePaymentLinkModal}
+          onClose={toggleCreatePaymentLinkModal}
+        />
+      )}
     </div>
   );
 };

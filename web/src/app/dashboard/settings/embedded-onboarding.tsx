@@ -81,27 +81,33 @@ export default function EmbeddedOnboarding() {
         <CardTitle>Configurare cont de plăți</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="text-sm text-slate-600">
-          Pentru a începe să accepți plăți și să primești transferuri,
-          finalizează configurarea contului tău de plăți.
-        </div>
-        <Button
-          onClick={start}
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm px-4"
-        >
-          Începe configurarea
-        </Button>
+        {!connectInstance && (
+          <>
+            <div className="text-sm text-slate-600">
+              Pentru a începe să accepți plăți și să primești transferuri,
+              finalizează configurarea contului tău de plăți.
+            </div>
+            <Button
+              onClick={start}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm px-4"
+            >
+              Începe configurarea
+            </Button>
+          </>
+        )}
         {error && <div className="text-sm text-red-600">{error}</div>}
         {connectInstance ? (
-          <ConnectComponentsProvider connectInstance={connectInstance}>
-            <ConnectAccountOnboarding
-              onExit={async () => {
-                // Refresh client views; webhook will update server state shortly after completion
-                await Promise.all([refreshStripe(), refreshAuth()]);
-              }}
-            />
-          </ConnectComponentsProvider>
+          <div className="border-yellow-300 border rounded-md py-4 px-4">
+            <ConnectComponentsProvider connectInstance={connectInstance}>
+              <ConnectAccountOnboarding
+                onExit={async () => {
+                  // Refresh client views; webhook will update server state shortly after completion
+                  await Promise.all([refreshStripe(), refreshAuth()]);
+                }}
+              />
+            </ConnectComponentsProvider>
+          </div>
         ) : null}
       </CardContent>
     </Card>
