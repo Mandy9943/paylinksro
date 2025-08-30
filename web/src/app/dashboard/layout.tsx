@@ -120,7 +120,9 @@ const Layout = ({ children }: { children: ReactNode }) => {
                   Sold disponibil:{" "}
                   <span className="font-semibold">
                     {balance
-                      ? `${balance.available.toFixed(2)} ${balance.currency}`
+                      ? `${(balance.available + balance.pending).toFixed(2)} ${
+                          balance.currency
+                        }`
                       : "0.00 RON"}
                   </span>
                 </div>

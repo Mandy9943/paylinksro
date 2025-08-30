@@ -11,7 +11,7 @@ function rangeOrDefault(from?: Date, to?: Date) {
 export async function getSummary(userId: string, from?: Date, to?: Date) {
   const { start, end } = rangeOrDefault(from, to);
 
-  const [success, refunds, disputes, customers] = await Promise.all([
+  const [success, refunds, disputes, customers, netOfPlatform] = await Promise.all([
     prisma.transaction.aggregate({
       _sum: { amount: true, netAmount: true, refundedAmount: true },
       _count: { _all: true },
@@ -35,11 +35,28 @@ export async function getSummary(userId: string, from?: Date, to?: Date) {
     prisma.customer.count({
       where: { userId, createdAt: { gte: start, lte: end } },
     }),
+    // Sum of amount minus platform fees (percent + fixed + monthly portions)
+    prisma.$queryRawUnsafe<{ sum: bigint | null }[]>(
+      `select sum(("amount" - coalesce("appFeePercent",0) - coalesce("appFeeFixed",0) - coalesce("appFeeMonthly",0))) as sum
+       from "Transaction"
+       where "userId" = $1
+         and "status" = 'SUCCEEDED'
+         and "succeededAt" between $2 and $3`,
+      userId,
+      start,
+      end
+    ),
   ]);
 
   const successCount = success._count._all ?? 0;
   const gross = success._sum.amount ?? 0;
-  const net = success._sum.netAmount ?? null;
+  // Net of platform fee (does not account for Stripe processing fees)
+  const net = (() => {
+    const row = Array.isArray(netOfPlatform) ? netOfPlatform[0] : undefined;
+    if (!row) return null;
+    const val = row.sum == null ? null : Number(row.sum);
+    return val;
+  })();
   const refunded = refunds._sum.refundedAmount ?? 0;
 
   // Average processing time: use succeededAt - createdAt on succeeded transactions
@@ -111,7 +128,7 @@ export async function getRevenueSeries(
   const unit = interval === "month" ? "month" : "day";
   const buckets = await prisma.$queryRawUnsafe<{ bucket: Date; sum: bigint }[]>(
     `select date_trunc('${unit}', coalesce("succeededAt", "createdAt")) as bucket,
-            sum("amount") as sum
+            sum(("amount" - coalesce("appFeePercent",0) - coalesce("appFeeFixed",0) - coalesce("appFeeMonthly",0))) as sum
      from "Transaction"
      where "userId" = $1
        and ("succeededAt" between $2 and $3)

@@ -17,7 +17,7 @@ import RevenueChart from "./RevenueChart";
 export default function Analytics() {
   const { data: summary } = useAnalyticsSummary();
   const { data: methods } = usePaymentMethods();
-  const gross = (summary?.revenueGrossMinor ?? 0) / 100;
+  const net = (summary?.revenueNetMinor ?? summary?.revenueGrossMinor ?? 0) / 100;
   const success = summary?.successCount ?? 0;
   const disputes = summary?.disputesCount ?? 0;
   const newCustomers = summary?.newCustomers ?? 0;
@@ -41,13 +41,13 @@ export default function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Venituri lunare</CardTitle>
+            <CardTitle>Venituri lunare (net de taxă platformă)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-gray-900 mb-2">
-              {gross.toFixed(2)} RON
+              {net.toFixed(2)} RON
             </div>
-            {gross > 0 ? null : (
+            {net > 0 ? null : (
               <p className="text-sm text-gray-500">Nu sunt venituri încă</p>
             )}
             <RevenueChart />

@@ -10,10 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useAuth } from "@/hooks/useAuth";
-import { useStripeAccount } from "@/hooks/useStripeAccount";
 import { useBalance } from "@/hooks/useAnalytics";
+import { useAuth } from "@/hooks/useAuth";
 import { usePayouts, useRequestPayout } from "@/hooks/usePayouts";
+import { useStripeAccount } from "@/hooks/useStripeAccount";
 import {
   loadConnectAndInitialize,
   type StripeConnectInstance,
@@ -30,22 +30,10 @@ export default function Payouts() {
 
   const { data: bal } = useBalance();
   const available = {
-    available: bal?.available ?? 0,
+    available: (bal?.available ?? 0) + (bal?.pending ?? 0),
     processing: (bal && (bal as { processing?: number }).processing) ?? 0,
     totalTransferred: bal?.totalTransferred ?? 0,
   };
-
-  // const bank: { accountName?: string; iban?: string; bankName?: string } = {};
-
-  // future: editable bank details if needed
-  // const [accountName, setAccountName] = useState(bank?.accountName ?? "");
-  // const [iban, setIban] = useState(bank?.iban ?? "");
-  // const [bankName, setBankName] = useState(bank?.bankName ?? "");
-
-  // Stubs until API exists
-  // const [savePending, setSavePending] = useState(false);
-  // const [requestPending, setRequestPending] = useState(false);
-  // const saveBank = { /* future wiring */ } as const;
 
   // Onboarding modal state
   const [showModal, setShowModal] = useState(false);
@@ -60,7 +48,9 @@ export default function Payouts() {
     setLoadingConnect(true);
     setConnectError(null);
     try {
-  const { data: pkRes } = await (await import("@/lib/api")).api.get(`/v1/stripe/pk`);
+      const { data: pkRes } = await (
+        await import("@/lib/api")
+      ).api.get(`/v1/stripe/pk`);
       if (!pkRes?.publishableKey) {
         setConnectError("Cheia publică nu este configurată.");
         return;
@@ -69,9 +59,13 @@ export default function Payouts() {
         publishableKey: pkRes.publishableKey,
         fetchClientSecret: async () => {
           // We call a dedicated endpoint that creates an account session for the current user
-          const { data: me } = await (await import("@/lib/api")).api.get(`/v1/stripe/accounts/me`);
+          const { data: me } = await (
+            await import("@/lib/api")
+          ).api.get(`/v1/stripe/accounts/me`);
           const accountId: string = me.id;
-          const { data: sess } = await (await import("@/lib/api")).api.post(`/v1/stripe/accounts/${accountId}/account-session`, {});
+          const { data: sess } = await (
+            await import("@/lib/api")
+          ).api.post(`/v1/stripe/accounts/${accountId}/account-session`, {});
           return (sess.client_secret as string) || "";
         },
         appearance: { overlays: "dialog" },
@@ -206,20 +200,36 @@ export default function Payouts() {
           {payouts && payouts.length > 0 ? (
             <div className="divide-y">
               {payouts.map((p) => (
-                <div key={p.id} className="flex items-center justify-between py-3 text-sm">
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between py-3 text-sm"
+                >
                   <div className="flex flex-col">
-                    <span className="font-medium">{(p.amountMinor / 100).toFixed(2)} {p.currency}</span>
-                    <span className="text-gray-500">{p.status.replace(/_/g, " ")}</span>
+                    <span className="font-medium">
+                      {(p.amountMinor / 100).toFixed(2)} {p.currency}
+                    </span>
+                    <span className="text-gray-500">
+                      {p.status.replace(/_/g, " ")}
+                    </span>
                   </div>
                   <div className="text-right text-gray-500">
-                    <div>{p.created ? new Date(p.created).toLocaleString() : "--"}</div>
-                    <div>Arrival: {p.arrivalDate ? new Date(p.arrivalDate).toLocaleDateString() : "--"}</div>
+                    <div>
+                      {p.created ? new Date(p.created).toLocaleString() : "--"}
+                    </div>
+                    <div>
+                      Arrival:{" "}
+                      {p.arrivalDate
+                        ? new Date(p.arrivalDate).toLocaleDateString()
+                        : "--"}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-sm text-gray-500">Nu există plăți efectuate încă.</div>
+            <div className="text-sm text-gray-500">
+              Nu există plăți efectuate încă.
+            </div>
           )}
         </CardContent>
       </Card>
