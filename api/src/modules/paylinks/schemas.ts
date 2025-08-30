@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FEES } from "../../config/fees.js";
 
 export const priceTypeEnum = z.enum(["FIXED", "FLEXIBLE"]);
 export const serviceTypeEnum = z.enum([
@@ -8,15 +9,21 @@ export const serviceTypeEnum = z.enum([
   "FUNDRAISING",
 ]);
 
-export const createPayLinkSchema = z.object({
+const createPayLinkBase = z.object({
   name: z.string().min(1),
   slug: z
     .string()
     .min(1)
     .regex(/^[a-z0-9-]+$/),
   priceType: priceTypeEnum,
-  amount: z.coerce.number().nonnegative().optional(), // RON, converted to bani server-side
-  minAmount: z.coerce.number().nonnegative().optional(), // RON, converted to bani server-side (flexible)
+  amount: z.coerce
+    .number()
+    .nonnegative()
+    .optional(), // RON, converted to bani server-side
+  minAmount: z.coerce
+    .number()
+    .nonnegative()
+    .optional(), // RON, converted to bani server-side (flexible)
   currency: z.string().default("RON").optional(),
   active: z.boolean().optional(),
   serviceType: serviceTypeEnum,
@@ -51,7 +58,28 @@ export const createPayLinkSchema = z.object({
     .optional(),
 });
 
-export const updatePayLinkSchema = createPayLinkSchema.partial();
+export const createPayLinkSchema = createPayLinkBase.superRefine((val, ctx) => {
+  if (val.priceType === "FIXED") {
+    if (val.amount == null || val.amount * 100 < FEES.MIN_TRANSACTION_RON * 100) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["amount"],
+        message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+      });
+    }
+  }
+  if (val.priceType === "FLEXIBLE") {
+    if (val.minAmount && val.minAmount * 100 < FEES.MIN_TRANSACTION_RON * 100) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["minAmount"],
+        message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+      });
+    }
+  }
+});
+
+export const updatePayLinkSchema = createPayLinkBase.partial();
 
 export const listQuerySchema = z.object({
   cursor: z.string().optional(),
@@ -59,7 +87,13 @@ export const listQuerySchema = z.object({
 });
 
 export const createPublicPaymentIntentSchema = z.object({
-  amount: z.coerce.number().positive().optional(), // RON; required for FLEXIBLE/DONATION/FUNDRAISING
+  amount: z.coerce
+    .number()
+    .positive()
+    .refine((v) => v * 100 >= FEES.MIN_TRANSACTION_RON * 100, {
+      message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+    })
+    .optional(), // RON; required for FLEXIBLE/DONATION/FUNDRAISING
   email: z.string().email().optional(),
 });
 

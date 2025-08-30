@@ -1,5 +1,6 @@
 import { prisma } from "../../../lib/prisma.js";
 import { presignGetUrl } from "../../../lib/r2.js";
+import { splitBaseApplicationFeeMinor, monthStartUTC } from "../../../config/fees.js";
 import { sendMail } from "../../../services/mailer.js";
 import {
   findPayLinkBasic,
@@ -12,6 +13,8 @@ export async function onChargeSucceeded(event: any) {
   const charge = event.data.object as any;
   let paylinkId = charge?.metadata?.paylinkId as string | undefined;
   const amountMinor = (charge?.amount as number) ?? 0;
+  const metaBase = parseInt(charge?.metadata?.appFeeBase ?? "0", 10) || 0;
+  const metaMonthly = parseInt(charge?.metadata?.appFeeMonthly ?? "0", 10) || 0;
   const recipient =
     (charge?.billing_details?.email as string | undefined) ||
     (charge?.receipt_email as string | undefined) ||
@@ -46,14 +49,36 @@ export async function onChargeSucceeded(event: any) {
       typeof charge.transfer?.amount === "number"
         ? (charge.transfer.amount as number)
         : undefined;
-    await prisma.transaction.updateMany({
+  const split = splitBaseApplicationFeeMinor(amountMinor);
+  await prisma.transaction.updateMany({
       where: { stripeChargeId: charge.id as string },
       data: {
         createdAt,
         succeededAt,
         netAmount: netMinor ?? undefined,
+    appFeePercent: split.percentMinor,
+    appFeeFixed: split.fixedMinor,
+    appFeeMonthly: metaMonthly || undefined,
       },
     });
+    // Accrue the monthly active fee portion as collected for the current month
+    if (metaMonthly > 0) {
+      const now = new Date();
+      const mStart = monthStartUTC(now);
+      await prisma.monthlyFeeAccrual.upsert({
+        where: { userId_month: { userId: link.userId, month: mStart } as any },
+        update: {
+          collected: { increment: metaMonthly },
+          lastTransactionId: charge.id as string,
+        },
+        create: {
+          userId: link.userId,
+          month: mStart,
+          collected: metaMonthly,
+          lastTransactionId: charge.id as string,
+        },
+      });
+    }
   } catch {
     // ignore
   }

@@ -29,20 +29,20 @@ export const createPaymentLinkSchema = z
   })
   .superRefine((val, ctx) => {
     if (val.type !== "fundraising" && val.priceType === "fixed") {
-      if (val.amount == null || val.amount <= 0) {
+    if (val.amount == null || val.amount < 5) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["amount"],
-          message: "Introduceți o sumă > 0",
+      message: "Suma minimă este 5 RON",
         });
       }
     }
     if (val.type !== "fundraising" && val.priceType === "flexible") {
-      if (val.minAmount != null && val.minAmount < 0) {
+    if (val.minAmount != null && val.minAmount > 0 && val.minAmount < 5) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["minAmount"],
-          message: "Suma minimă nu poate fi negativă",
+      message: "Suma minimă este 5 RON",
         });
       }
     }

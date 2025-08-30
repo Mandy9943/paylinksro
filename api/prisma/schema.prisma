@@ -29,6 +29,7 @@ model User {
     transactions            Transaction[]
     active                  Boolean          @default(true)
     settings                UserSettings?
+    monthlyFeeAccruals      MonthlyFeeAccrual[]
 }
 
 model MagicLinkToken {
@@ -169,6 +170,11 @@ model Transaction {
     // Net amount to seller (minor units)
     netAmount Int?
 
+    // Fee breakdown (minor units)
+    appFeePercent Int? // 5% portion
+    appFeeFixed   Int? // fixed +1 or +2 RON portion per transaction
+    appFeeMonthly Int? // portion of the monthly active fee charged on this transaction
+
     // Dispute reference
     stripeDisputeId String?
 
@@ -178,6 +184,26 @@ model Transaction {
     @@index([userId, createdAt])
     @@index([userId, succeededAt])
     @@index([payLinkId, createdAt])
+}
+
+// ---------------------------
+// Platform monthly active fee accruals
+// ---------------------------
+
+model MonthlyFeeAccrual {
+    id        String   @id @default(cuid())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id])
+    month     DateTime // normalized to first day of the month UTC
+    // How much of the monthly active fee has been collected so far (minor units)
+    collected Int      @default(0)
+    // Optional stripe payment intent or charge that last contributed
+    lastTransactionId String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, month])
+    @@index([userId, month])
 }
 
 // ---------------------------
