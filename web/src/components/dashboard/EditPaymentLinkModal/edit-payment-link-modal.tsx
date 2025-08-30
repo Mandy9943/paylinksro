@@ -46,6 +46,7 @@ export default function EditPaymentLinkModal({
     collectEmail: !!l?.collectEmail,
     collectPhone: !!l?.collectPhone,
     collectBillingAddress: (l?.collectBillingAddress ?? false) as boolean,
+    addVat: (l?.addVat ?? true) as boolean,
     mainColor: l?.mainColor || "#fbbf24",
     productAssetUrls: Array.isArray(l?.product?.assets)
       ? (l?.product?.assets as string[])
@@ -67,6 +68,7 @@ export default function EditPaymentLinkModal({
           collectEmail: true,
           collectPhone: false,
           collectBillingAddress: false,
+          addVat: true,
           mainColor: "#fbbf24",
           productAssetUrls: [],
           productCoverImageUrl: null,
@@ -122,6 +124,7 @@ export default function EditPaymentLinkModal({
       collectEmail: values.collectEmail,
       collectPhone: values.collectPhone,
       collectBillingAddress: values.collectBillingAddress,
+      addVat: values.addVat,
       mainColor: values.mainColor,
     };
 

@@ -34,6 +34,7 @@ export default function CreatePaymentLinkModal({
     collectEmail: true,
     collectPhone: false,
     collectBillingAddress: false,
+    addVat: true,
     mainColor: "#fbbf24",
     productAssetUrls: [],
     productCoverImageUrl: null,
@@ -83,6 +84,7 @@ export default function CreatePaymentLinkModal({
       collectEmail: values.collectEmail,
       collectPhone: values.collectPhone,
       collectBillingAddress: values.collectBillingAddress,
+      addVat: values.addVat,
       mainColor: values.mainColor,
     };
 

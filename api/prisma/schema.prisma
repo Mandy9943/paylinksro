@@ -73,6 +73,8 @@ model PayLink {
     collectEmail          Boolean     @default(true)
     collectPhone          Boolean     @default(false)
     collectBillingAddress Boolean     @default(false)
+    // When true, add 21% VAT on top of the price at checkout
+    addVat                Boolean     @default(true)
     mainColor             String? // hex color like #fbbf24
     createdAt             DateTime    @default(now())
     updatedAt             DateTime    @updatedAt

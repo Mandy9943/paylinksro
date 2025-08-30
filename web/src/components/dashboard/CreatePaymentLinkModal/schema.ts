@@ -20,6 +20,7 @@ export const createPaymentLinkSchema = z
     collectEmail: z.boolean().default(true),
     collectPhone: z.boolean().default(false),
     collectBillingAddress: z.boolean().default(false),
+    addVat: z.boolean().default(true),
     mainColor: z.string().default("#fbbf24"),
     // Upload results
     productAssetUrls: z.array(z.string()).default([]),

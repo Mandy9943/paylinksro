@@ -12,6 +12,22 @@ export function OptionsFields() {
       <h3 className="text-lg font-medium text-gray-900 mb-4">Opțiuni</h3>
       <div className="space-y-4">
         <Controller
+          name="addVat"
+          control={control}
+          render={({ field }) => (
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="addVat"
+                checked={field.value}
+                onCheckedChange={(v) => field.onChange(v === true)}
+              />
+              <Label htmlFor="addVat" className="text-sm">
+                Adaugă Taxa TVA (21%)
+              </Label>
+            </div>
+          )}
+        />
+        <Controller
           name="collectEmail"
           control={control}
           render={({ field }) => (

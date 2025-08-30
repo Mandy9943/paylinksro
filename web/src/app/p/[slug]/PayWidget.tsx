@@ -21,7 +21,12 @@ async function fetchPK(): Promise<string> {
   return json.publishableKey as string;
 }
 
-async function createPublicPI(slug: string, amount?: number, email?: string) {
+async function createPublicPI(
+  slug: string,
+  amount?: number,
+  email?: string,
+  addVat?: boolean
+) {
   const res = await fetch(
     `${API_BASE}/v1/paylinks/public/${encodeURIComponent(
       slug
@@ -29,7 +34,7 @@ async function createPublicPI(slug: string, amount?: number, email?: string) {
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount, email }),
+      body: JSON.stringify({ amount, email, addVat }),
     }
   );
   const json = await res.json();
@@ -46,6 +51,7 @@ function StartForm({
   requireEmail,
   onEmailCaptured,
   onAmountChange,
+  addVat,
 }: {
   setClientSecret: (v: string) => void;
   requiresAmount: boolean;
@@ -54,6 +60,7 @@ function StartForm({
   requireEmail?: boolean;
   onEmailCaptured?: (email: string | undefined) => void;
   onAmountChange?: (amount?: number) => void;
+  addVat?: boolean;
 }) {
   const [amount, setAmount] = useState<string>(
     minAmount ? String(minAmount) : ""
@@ -92,7 +99,7 @@ function StartForm({
       const val = requiresAmount ? parseFloat(amount || "0") : undefined;
       const emailToUse = requireEmail ? email || undefined : undefined;
       if (onEmailCaptured) onEmailCaptured(emailToUse);
-      const cs = await createPublicPI(slug, val, emailToUse);
+      const cs = await createPublicPI(slug, val, emailToUse, addVat);
       setClientSecret(cs);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Cannot create payment";
@@ -328,6 +335,7 @@ export default function PayWidget({
   requirePhone,
   requireBilling,
   onAmountChange,
+  addVat,
 }: {
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
@@ -336,6 +344,7 @@ export default function PayWidget({
   requirePhone?: boolean;
   requireBilling?: boolean;
   onAmountChange?: (amount?: number) => void;
+  addVat?: boolean;
 }) {
   const requiresAmount = priceType === "FLEXIBLE";
   const [pk, setPk] = useState<string | null>(null);
@@ -359,7 +368,7 @@ export default function PayWidget({
         );
         if (!requiresAmount && !requireEmail) {
           // Fixed-price: create PI immediately
-          const cs = await createPublicPI(slug);
+          const cs = await createPublicPI(slug, undefined, undefined, addVat);
           if (!ignore) setClientSecret(cs);
         }
       } catch {
@@ -369,7 +378,7 @@ export default function PayWidget({
     return () => {
       ignore = true;
     };
-  }, [slug, requiresAmount, requireEmail]);
+  }, [slug, requiresAmount, requireEmail, addVat]);
 
   const elementsOptions = useMemo(
     () => ({ clientSecret: clientSecret || undefined }),
@@ -387,6 +396,7 @@ export default function PayWidget({
         requireEmail={requireEmail}
         onEmailCaptured={setPayerEmail}
         onAmountChange={onAmountChange}
+        addVat={addVat}
       />
     );
   }

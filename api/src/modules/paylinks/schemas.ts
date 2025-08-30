@@ -25,6 +25,7 @@ const createPayLinkBase = z.object({
   collectEmail: z.boolean().optional(),
   collectPhone: z.boolean().optional(),
   collectBillingAddress: z.boolean().optional(),
+  addVat: z.boolean().optional(),
   mainColor: z
     .string()
     .regex(/^#?[0-9a-fA-F]{3,8}$/)
@@ -92,6 +93,7 @@ export const createPublicPaymentIntentSchema = z.object({
     })
     .optional(), // RON; required for FLEXIBLE/DONATION/FUNDRAISING
   email: z.string().email().optional(),
+  addVat: z.boolean().optional(),
 });
 
 export type CreatePayLinkInput = z.infer<typeof createPayLinkSchema>;

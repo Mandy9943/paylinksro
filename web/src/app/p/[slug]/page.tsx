@@ -18,6 +18,7 @@ type PayLink = {
   collectEmail: boolean;
   collectPhone: boolean;
   collectBillingAddress?: boolean | null;
+  addVat?: boolean | null;
   mainColor?: string | null;
   sellerStripeAccountId?: string | null;
   sellerOnboarded?: boolean;
@@ -205,6 +206,7 @@ export default async function PublicPayLinkPage({
                   amount={amount}
                   minAmount={minAmount}
                   name={name}
+                  addVat={!!data.addVat}
                 />
               </div>
             </div>
@@ -228,6 +230,7 @@ export default async function PublicPayLinkPage({
                         requireEmail={collectEmail}
                         requirePhone={collectPhone}
                         requireBilling={collectBillingAddress}
+                        addVat={!!data.addVat}
                       />
                     ) : (
                       <div className="h-24 flex items-center justify-center rounded-md border border-dashed border-amber-300 bg-amber-50 text-amber-900 text-sm">

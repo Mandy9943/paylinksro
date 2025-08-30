@@ -32,6 +32,7 @@ export function PreviewPane() {
     control,
     name: "collectBillingAddress",
   });
+  const addVat = useWatch({ control, name: "addVat" });
   const mainColor = useWatch({ control, name: "mainColor" });
   const targetAmount = useWatch({ control, name: "targetAmount" }) || 1000;
   const productCoverImageUrl = useWatch({
@@ -134,14 +135,11 @@ export function PreviewPane() {
                   ? `Donează pentru ${name || "Cauza"}`
                   : `Support ${name || "Our Campaign"}`}
               </div>
-              {description &&
-                (type === "servicii" ||
-                  type === "produse-digitale" ||
-                  type === "fundraising") && (
-                  <div className="text-xs text-gray-600 mb-4 px-2">
-                    {description}
-                  </div>
-                )}
+              {description && (
+                <div className="text-xs text-gray-600 mb-4 px-2">
+                  {description}
+                </div>
+              )}
 
               {type === "fundraising" && (
                 <div className="mb-4 px-2">
@@ -221,13 +219,20 @@ export function PreviewPane() {
                   </div>
                 ) : priceType === "fixed" ? (
                   <>
-                    <div className="flex justify-between">
-                      <span>Tax %</span>
-                      <span>21%</span>
-                    </div>
+                    {addVat && (
+                      <div className="flex justify-between">
+                        <span>TVA</span>
+                        <span>21%</span>
+                      </div>
+                    )}
                     <div className="flex justify-between font-semibold border-t pt-2">
                       <span>Total due</span>
-                      <span>RON {amount ?? 0}</span>
+                      <span>
+                        RON{" "}
+                        {addVat
+                          ? ((amount ?? 0) * 1.21).toFixed(2)
+                          : amount ?? 0}
+                      </span>
                     </div>
                   </>
                 ) : (
@@ -343,8 +348,12 @@ export function PreviewPane() {
                 {type === "fundraising"
                   ? "Donează acum"
                   : priceType === "fixed"
-                  ? `Plătește ${((amount ?? 0) * 1.21).toFixed(2)} RON acum`
-                  : "Plătește + 21% tax acum"}
+                  ? `Plătește ${
+                      addVat ? ((amount ?? 0) * 1.21).toFixed(2) : amount ?? 0
+                    } RON acum`
+                  : addVat
+                  ? "Plătește + 21% TVA acum"
+                  : "Plătește acum"}
               </Button>
 
               <div className="text-xs text-center text-gray-500 mt-4">

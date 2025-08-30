@@ -14,6 +14,7 @@ export type PayLink = {
   collectEmail: boolean;
   collectPhone: boolean;
   collectBillingAddress?: boolean | null;
+  addVat?: boolean | null;
   mainColor?: string | null;
   service?: {
     id: string;
@@ -50,6 +51,7 @@ export type UpdatePayLinkInput = Partial<{
   collectEmail?: boolean;
   collectPhone?: boolean;
   collectBillingAddress?: boolean;
+  addVat?: boolean;
   mainColor?: string;
   service?: { title?: string; description?: string; coverImageUrl?: string };
   product?: {
@@ -77,6 +79,7 @@ export async function createPayLink(input: {
   collectEmail?: boolean;
   collectPhone?: boolean;
   collectBillingAddress?: boolean;
+  addVat?: boolean;
   mainColor?: string;
   service?: { title: string; description?: string; coverImageUrl?: string };
   product?: {

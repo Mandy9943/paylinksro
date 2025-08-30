@@ -41,6 +41,7 @@ export async function listPayLinks(
       collectEmail: true,
       collectPhone: true,
       collectBillingAddress: true,
+      addVat: true,
       mainColor: true,
       createdAt: true,
       updatedAt: true,
@@ -111,6 +112,7 @@ export async function createPayLink(userId: string, data: CreatePayLinkInput) {
     collectEmail: data.collectEmail ?? true,
     collectPhone: data.collectPhone ?? false,
     collectBillingAddress: data.collectBillingAddress ?? false,
+    addVat: (data as any).addVat ?? true,
     mainColor: data.mainColor,
   } as const;
 
@@ -313,6 +315,7 @@ export async function findPublicPayLinkBySlug(slug: string) {
       collectEmail: true,
       collectPhone: true,
       collectBillingAddress: true,
+      addVat: true,
       mainColor: true,
       createdAt: true,
       updatedAt: true,
@@ -375,6 +378,7 @@ export async function duplicatePayLink(userId: string, id: string) {
       collectEmail: existing.collectEmail,
       collectPhone: existing.collectPhone,
       collectBillingAddress: existing.collectBillingAddress,
+      addVat: (existing as any).addVat ?? true,
       mainColor: existing.mainColor,
       ...(existing.service
         ? {

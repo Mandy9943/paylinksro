@@ -342,12 +342,47 @@ export function ProductFields() {
             name="name"
             control={control}
             render={({ field, fieldState }) => (
-              <Input
-                placeholder="Găsește sau adaugă o donație..."
-                className="w-full"
-                aria-invalid={!!fieldState.error}
-                {...field}
-              />
+              <div>
+                <Label
+                  htmlFor="donation-title"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Titlu
+                </Label>
+                <Input
+                  id="donation-title"
+                  placeholder="Titlul donației..."
+                  className="w-full mt-1"
+                  aria-invalid={!!fieldState.error}
+                  {...field}
+                />
+                {fieldState.error && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {fieldState.error.message}
+                  </p>
+                )}
+              </div>
+            )}
+          />
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label
+                  htmlFor="donation-description"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Descriere
+                </Label>
+                <Textarea
+                  id="donation-description"
+                  placeholder="Descrierea donației..."
+                  rows={3}
+                  className="w-full mt-1"
+                  {...field}
+                />
+              </div>
             )}
           />
         </div>

@@ -36,6 +36,7 @@ export async function listCtrl(req: any, res: Response, next: NextFunction) {
         ...p,
         amount: toRON(p.amount),
         minAmount: toRON((p as any).minAmount),
+        addVat: (p as any).addVat,
         fundraising: p.fundraising
           ? {
               ...p.fundraising,
@@ -56,24 +57,20 @@ export async function createCtrl(req: any, res: Response, next: NextFunction) {
     // Validate minimum amount at API level as well
     if (parsed.priceType === "FIXED") {
       if ((parsed.amount ?? 0) * 100 < minTransactionMinor()) {
-        return res
-          .status(400)
-          .json({
-            error: {
-              message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
-            },
-          });
+        return res.status(400).json({
+          error: {
+            message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+          },
+        });
       }
     } else if (parsed.priceType === "FLEXIBLE") {
       const minA = (parsed as any).minAmount ?? 0;
       if (minA && minA * 100 < minTransactionMinor()) {
-        return res
-          .status(400)
-          .json({
-            error: {
-              message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
-            },
-          });
+        return res.status(400).json({
+          error: {
+            message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+          },
+        });
       }
     }
     const created = await createPayLink(req.user.id, {
@@ -122,13 +119,11 @@ export async function updateCtrl(req: any, res: Response, next: NextFunction) {
       typeof (parsed as any).amount === "number"
     ) {
       if ((parsed as any).amount * 100 < minTransactionMinor()) {
-        return res
-          .status(400)
-          .json({
-            error: {
-              message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
-            },
-          });
+        return res.status(400).json({
+          error: {
+            message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+          },
+        });
       }
     }
     if (
@@ -137,13 +132,11 @@ export async function updateCtrl(req: any, res: Response, next: NextFunction) {
       (parsed as any).minAmount! > 0 &&
       (parsed as any).minAmount! * 100 < minTransactionMinor()
     ) {
-      return res
-        .status(400)
-        .json({
-          error: {
-            message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
-          },
-        });
+      return res.status(400).json({
+        error: {
+          message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+        },
+      });
     }
     const updated = await updatePayLink(req.user.id, id, {
       ...parsed,
@@ -237,6 +230,7 @@ export async function publicGetBySlugCtrl(
       ...p,
       amount: toRON(p.amount),
       minAmount: toRON((p as any).minAmount),
+      addVat: (p as any).addVat,
       sellerStripeAccountId: owner?.stripeAccountId ?? null,
       sellerOnboarded: owner?.onboardedAt ? true : false,
       fundraising: p.fundraising
@@ -296,15 +290,18 @@ export async function publicCreatePaymentIntentCtrl(
           .json({ error: { message: "Amount below minimum" } });
       }
     }
+    // Apply VAT if requested by link or explicit flag
+    const shouldAddVat = (link as any).addVat ?? body.addVat ?? false;
+    if (shouldAddVat) {
+      amountMinor = Math.round(amountMinor! * 1.21);
+    }
     // Enforce global minimum
     if ((amountMinor ?? 0) < minTransactionMinor()) {
-      return res
-        .status(400)
-        .json({
-          error: {
-            message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
-          },
-        });
+      return res.status(400).json({
+        error: {
+          message: `Minimum amount is ${FEES.MIN_TRANSACTION_RON} RON`,
+        },
+      });
     }
     // Compute base application fee (percent + fixed tiered)
     const baseFee = calcBaseApplicationFeeMinor(amountMinor!);

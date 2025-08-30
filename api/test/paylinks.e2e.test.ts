@@ -324,6 +324,7 @@ describe("PayLinks endpoints", () => {
         priceType: "FIXED",
         amount: 5,
         serviceType: "SERVICE",
+        addVat: false,
       })
       .expect(201);
 
@@ -369,6 +370,7 @@ describe("PayLinks endpoints", () => {
         priceType: "FIXED",
         amount: 5,
         serviceType: "SERVICE",
+        addVat: false,
       })
       .expect(201);
 
@@ -397,6 +399,7 @@ describe("PayLinks endpoints", () => {
         priceType: "FLEXIBLE",
         minAmount: 7,
         serviceType: "DONATION",
+        addVat: false,
       })
       .expect(201);
 
@@ -420,6 +423,127 @@ describe("PayLinks endpoints", () => {
       .expect(200);
     expect(ok.body.client_secret).toBe("cs_test_123");
     expect(lastPIArgs.amount).toBe(1000);
+  });
+
+  it("public PI applies VAT (21%) to amount for FIXED when addVat is true (default)", async () => {
+    // Ensure seller onboarded (might already be from previous test)
+    await prisma.user.update({
+      where: { id: u1.user.id },
+      data: { stripeAccountId: "acct_test_123", onboardedAt: new Date() },
+    });
+
+    const created = await request(app)
+      .post("/api/v1/paylinks")
+      .set("Authorization", `Bearer ${u1.token}`)
+      .send({
+        name: "Fixed VAT 5",
+        slug: "fixed-vat-5",
+        priceType: "FIXED",
+        amount: 5,
+        serviceType: "SERVICE",
+        // omit addVat to use default true
+      })
+      .expect(201);
+
+    lastPIArgs = null;
+    const res = await request(app)
+      .post(`/api/v1/paylinks/public/${created.body.slug}/payment-intents`)
+      .send({})
+      .expect(200);
+    expect(res.body.client_secret).toBe("cs_test_123");
+    // Base 5 RON -> 500 bani, with 21% VAT -> 605 bani
+    expect(lastPIArgs).toBeTruthy();
+    expect(lastPIArgs.amount).toBe(605);
+    // Sanity: application fee must not exceed amount
+    expect(lastPIArgs.application_fee_amount).toBeLessThanOrEqual(605);
+  });
+
+  it("public PI applies VAT (21%) for FLEXIBLE when link has addVat true and amount is provided", async () => {
+    // Ensure seller onboarded
+    await prisma.user.update({
+      where: { id: u1.user.id },
+      data: { stripeAccountId: "acct_test_123", onboardedAt: new Date() },
+    });
+
+    const created = await request(app)
+      .post("/api/v1/paylinks")
+      .set("Authorization", `Bearer ${u1.token}`)
+      .send({
+        name: "Flex VAT",
+        slug: "flex-vat",
+        priceType: "FLEXIBLE",
+        minAmount: 5,
+        serviceType: "DONATION",
+        // default addVat = true
+      })
+      .expect(201);
+
+    lastPIArgs = null;
+    const res = await request(app)
+      .post(`/api/v1/paylinks/public/${created.body.slug}/payment-intents`)
+      .send({ amount: 10 })
+      .expect(200);
+    expect(res.body.client_secret).toBe("cs_test_123");
+    // 10 RON -> 1000 bani; +21% VAT -> 1210 bani
+    expect(lastPIArgs.amount).toBe(1210);
+  });
+
+  it("public PI ignores request addVat when link has addVat=false (no VAT applied)", async () => {
+    await prisma.user.update({
+      where: { id: u1.user.id },
+      data: { stripeAccountId: "acct_test_123", onboardedAt: new Date() },
+    });
+
+    const created = await request(app)
+      .post("/api/v1/paylinks")
+      .set("Authorization", `Bearer ${u1.token}`)
+      .send({
+        name: "Flex VAT Override On",
+        slug: "flex-vat-override-on",
+        priceType: "FLEXIBLE",
+        minAmount: 5,
+        serviceType: "DONATION",
+        addVat: false,
+      })
+      .expect(201);
+
+    lastPIArgs = null;
+    await request(app)
+      .post(`/api/v1/paylinks/public/${created.body.slug}/payment-intents`)
+      .send({ amount: 5, addVat: true })
+      .expect(200);
+    expect(lastPIArgs).toBeTruthy();
+    // VAT should not be applied because the link has addVat=false
+    expect(lastPIArgs.amount).toBe(500);
+  });
+
+  it("public PI does not disable VAT via request when link has addVat=true", async () => {
+    await prisma.user.update({
+      where: { id: u1.user.id },
+      data: { stripeAccountId: "acct_test_123", onboardedAt: new Date() },
+    });
+
+    const created = await request(app)
+      .post("/api/v1/paylinks")
+      .set("Authorization", `Bearer ${u1.token}`)
+      .send({
+        name: "Flex VAT Non-Disable",
+        slug: "flex-vat-non-disable",
+        priceType: "FLEXIBLE",
+        minAmount: 5,
+        serviceType: "DONATION",
+        // addVat default true
+      })
+      .expect(201);
+
+    lastPIArgs = null;
+    const res = await request(app)
+      .post(`/api/v1/paylinks/public/${created.body.slug}/payment-intents`)
+      .send({ amount: 5, addVat: false })
+      .expect(200);
+    expect(res.body.client_secret).toBe("cs_test_123");
+    // VAT remains applied because link has addVat=true
+    expect(lastPIArgs.amount).toBe(605);
   });
 
   it("rejects invalid mainColor format", async () => {
@@ -460,6 +584,7 @@ describe("PayLinks endpoints", () => {
         priceType: "FIXED",
         amount: 5,
         serviceType: "SERVICE",
+        addVat: false,
       })
       .expect(201);
 
@@ -530,27 +655,26 @@ describe("PayLinks endpoints", () => {
     const nowJuly = new Date(Date.UTC(2025, 6, 2, 8, 0, 0));
     vi.setSystemTime(nowJuly);
 
-    // Reuse the existing paylink slug if present, else create one
-    // Try to find one; if none, create
-    let link = await prisma.payLink.findFirst({
-      where: { userId: u1.user.id },
+    // Ensure seller onboarded
+    await prisma.user.update({
+      where: { id: u1.user.id },
+      data: { stripeAccountId: "acct_test_123", onboardedAt: new Date() },
     });
-    if (!link) {
-      const created = await request(app)
-        .post("/api/v1/paylinks")
-        .set("Authorization", `Bearer ${u1.token}`)
-        .send({
-          name: "Monthly Accrual 2",
-          slug: "monthly-accrual-2",
-          priceType: "FIXED",
-          amount: 5,
-          serviceType: "SERVICE",
-        })
-        .expect(201);
-      link = created.body;
-    }
-    if (!link) throw new Error("link not created");
-    const slug = (link as any).slug as string;
+
+    // Create a fresh FIXED 5 RON link to avoid flakiness from reusing a FLEXIBLE link
+    const created = await request(app)
+      .post("/api/v1/paylinks")
+      .set("Authorization", `Bearer ${u1.token}`)
+      .send({
+        name: "Monthly Accrual 2",
+        slug: "monthly-accrual-2",
+        priceType: "FIXED",
+        amount: 5,
+        serviceType: "SERVICE",
+        addVat: false,
+      })
+      .expect(201);
+    const slug = created.body.slug as string;
     const julyStart = new Date(Date.UTC(2025, 6, 1, 0, 0, 0));
 
     // One charge in July
@@ -568,7 +692,7 @@ describe("PayLinks endpoints", () => {
       id: `ch_july_${Math.random().toString(36).slice(2, 8)}`,
       amount: lastPIArgs.amount,
       metadata: {
-        paylinkId: (link as any).id,
+        paylinkId: created.body.id,
         slug,
         appFeeBase: String(lastPIArgs.metadata.appFeeBase),
         appFeeMonthly: String(monthly),

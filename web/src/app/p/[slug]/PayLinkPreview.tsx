@@ -8,6 +8,7 @@ export default function PayLinkPreview({
   amount,
   minAmount,
   name,
+  addVat = false,
 }: {
   slug: string;
   type: "servicii" | "produse-digitale" | "donatii" | "fundraising";
@@ -15,6 +16,7 @@ export default function PayLinkPreview({
   amount?: number | null;
   minAmount?: number | null;
   name: string;
+  addVat?: boolean;
 }) {
   const [liveAmount, setLiveAmount] = useState<number | undefined>(
     typeof amount === "number" ? amount : undefined
@@ -37,12 +39,13 @@ export default function PayLinkPreview({
 
   const totalDueLabel = useMemo(() => {
     if (type === "fundraising") return "Enter amount below";
-    if (priceType === "FIXED") return `RON ${amount ?? 0}`;
+    if (priceType === "FIXED")
+      return `RON ${addVat ? ((amount ?? 0) * 1.21).toFixed(2) : amount ?? 0}`;
     if (typeof liveAmount === "number" && liveAmount > 0)
-      return `RON ${liveAmount}`;
+      return `RON ${addVat ? (liveAmount * 1.21).toFixed(2) : liveAmount}`;
     if (minAmount && minAmount > 0) return `RON ${minAmount}+`;
     return "La completarea formularului";
-  }, [type, priceType, amount, minAmount, liveAmount]);
+  }, [type, priceType, amount, minAmount, liveAmount, addVat]);
 
   const lineAmount = useMemo(() => {
     if (type === "fundraising") return "Any amount";
@@ -69,16 +72,30 @@ export default function PayLinkPreview({
   return (
     <div className="space-y-2 text-sm">
       <div className="text-2xl font-bold text-gray-900 mb-6">
-        {headerAmount}
+        {priceType === "FIXED"
+          ? addVat
+            ? `RON ${((amount ?? 0) * 1.21).toFixed(2)}`
+            : headerAmount
+          : headerAmount}
       </div>
       <div className="flex justify-between">
         <span>{name}</span>
-        <span>{lineAmount}</span>
+        <span>
+          {priceType === "FIXED"
+            ? addVat
+              ? `RON ${((amount ?? 0) * 1.21).toFixed(2)}`
+              : lineAmount
+            : lineAmount}
+        </span>
       </div>
       <div className="flex justify-between">
         <span>Subtotal</span>
         <span>
-          {type === "fundraising" ? "Enter amount below" : lineAmount}
+          {type === "fundraising"
+            ? "Enter amount below"
+            : priceType === "FIXED"
+            ? `RON ${amount ?? 0}`
+            : lineAmount}
         </span>
       </div>
       {type === "fundraising" ? (
@@ -88,13 +105,17 @@ export default function PayLinkPreview({
         </div>
       ) : priceType === "FIXED" ? (
         <>
-          <div className="flex justify-between">
-            <span>Tax %</span>
-            <span>21%</span>
-          </div>
+          {addVat && (
+            <div className="flex justify-between">
+              <span>TVA</span>
+              <span>21%</span>
+            </div>
+          )}
           <div className="flex justify-between font-semibold border-t pt-2">
             <span>Total due</span>
-            <span>RON {amount ?? 0}</span>
+            <span>
+              RON {addVat ? ((amount ?? 0) * 1.21).toFixed(2) : amount ?? 0}
+            </span>
           </div>
         </>
       ) : (
