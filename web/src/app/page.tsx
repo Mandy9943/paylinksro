@@ -15,6 +15,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -955,12 +956,12 @@ export default function Landing() {
             <div>
               <h3 className="font-semibold mb-4">Legal</h3>
               <div className="space-y-2 text-sm">
-                <a
-                  href="#"
+                <Link
+                  href="termeni-si-conditii"
                   className="block text-gray-400 hover:text-white transition-colors"
                 >
                   Termeni și condiții
-                </a>
+                </Link>
                 <a
                   href="#"
                   className="block text-gray-400 hover:text-white transition-colors"
