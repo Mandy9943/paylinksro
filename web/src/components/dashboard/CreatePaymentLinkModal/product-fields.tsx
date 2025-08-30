@@ -4,15 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  FileText,
-  Image as ImageIcon,
-  Info,
-  Loader2,
-  Plus,
-  Upload,
-  X,
-} from "lucide-react";
+import { FileText, Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
@@ -358,14 +350,6 @@ export function ProductFields() {
               />
             )}
           />
-          <Button
-            variant="ghost"
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium p-0 h-auto"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Adaugă produse recomandate
-            <Info className="h-4 w-4 ml-2" />
-          </Button>
         </div>
       )}
 
