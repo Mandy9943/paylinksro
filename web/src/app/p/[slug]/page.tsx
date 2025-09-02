@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
+import CopyUrlBar from "./CopyUrlBar";
 import PayLinkPreview from "./PayLinkPreview";
 import PayWidget from "./PayWidget";
 export const runtime = "edge";
@@ -93,7 +95,7 @@ export default async function PublicPayLinkPage({
   if (!data) notFound();
   const sellerOnboarded = !!data.sellerOnboarded;
 
-  const mainColor = data.mainColor || "#fbbf24";
+  const mainColor = data.mainColor || "#fbbf24"; // yellow fallback like the design
   const priceType = data.priceType || "FIXED";
   const type =
     data.serviceType === "SERVICE"
@@ -122,81 +124,105 @@ export default async function PublicPayLinkPage({
   // Preview amount is driven by client component and PayWidget events
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-2 md:p-4">
+      {/* URL bar with copy action */}
+      <CopyUrlBar slug={slug} />
+
       <div className="max-w-5xl mx-auto">
-        <div className="text-xs text-gray-500 mb-4">🔗 paylink.ro/p/{slug}</div>
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="flex flex-col md:flex-row">
-            <div
-              className="md:w-1/2 p-6 rounded-t-lg md:rounded-l-lg"
-              style={{ backgroundColor: mainColor }}
-            >
-              {coverImageUrl && (
-                <div className="mb-4 rounded overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={coverImageUrl}
-                    alt="Cover"
-                    className="w-full h-40 object-cover"
-                  />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {/* Left - Service/Product card */}
+          <div
+            className="rounded-lg p-4 md:p-6 text-black border-0 shadow-sm"
+            style={{ backgroundColor: mainColor }}
+          >
+            <div className="space-y-4 md:space-y-6">
+              {/* Header with avatar and title */}
+              <div className="flex items-start gap-4 md:gap-5">
+                <div className="relative w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
+                  <div className="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-xl shadow-black/20 ring-2 ring-white/50 bg-gradient-to-br from-white to-gray-100">
+                    {coverImageUrl ? (
+                      <Image
+                        src={coverImageUrl}
+                        alt="Cover"
+                        fill
+                        className="object-cover rounded-full"
+                        sizes="80px"
+                        priority
+                      />
+                    ) : (
+                      <div className="w-full h-full" />
+                    )}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br from-green-400 to-green-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                    <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-white rounded-full" />
+                  </div>
                 </div>
-              )}
-              <div className="flex items-center mb-4">
-                <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-white text-xs">✓</span>
+                <div className="min-w-0 flex-1 pt-1">
+                  <h1 className="text-xl md:text-2xl font-bold text-black leading-tight tracking-tight truncate">
+                    {name}
+                  </h1>
                 </div>
-                <span className="text-sm font-medium">{name}</span>
               </div>
 
-              <div className="text-center">
-                <div className="text-sm text-gray-700 mb-2">
-                  {type === "servicii"
-                    ? `Plătește ${name}`
-                    : type === "produse-digitale"
-                    ? `Cumpără ${name}`
-                    : type === "donatii"
-                    ? `Donează pentru ${name}`
-                    : `Support ${name}`}
-                </div>
-                {description && (
-                  <div className="text-xs text-gray-600 mb-4 px-2">
-                    {description}
+              {/* Description */}
+              {(description || name) && (
+                <div className="flex items-start gap-3 md:gap-4">
+                  <div className="w-6 h-6 md:w-7 md:h-7 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-green-500/25 ring-2 ring-green-300/30">
+                    <span className="text-white text-xs md:text-sm">✓</span>
                   </div>
-                )}
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <h3 className="font-bold text-black text-base md:text-lg leading-tight truncate">
+                      {type === "servicii"
+                        ? "Sesiune de consultanță online"
+                        : name}
+                    </h3>
+                    {description && (
+                      <p className="text-sm md:text-base text-black/90 leading-relaxed">
+                        {description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
-                {type === "fundraising" && (
-                  <div className="mb-4 px-2">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs text-gray-600">Raised</span>
-                      <span className="text-xs text-gray-600">
-                        {Math.min(
+              {/* Fundraising progress (if applicable) */}
+              {type === "fundraising" && (
+                <div className="mb-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs text-gray-800/80">Progres</span>
+                    <span className="text-xs text-gray-800/80">
+                      {Math.min(
+                        100,
+                        (currentRaised / (targetAmount || 1)) * 100
+                      ).toFixed(0)}
+                      %
+                    </span>
+                  </div>
+                  <div className="w-full bg-black/10 rounded-full h-2 mb-2">
+                    <div
+                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min(
                           100,
                           (currentRaised / (targetAmount || 1)) * 100
-                        ).toFixed(0)}
-                        %
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                        style={{
-                          width: `${Math.min(
-                            100,
-                            (currentRaised / (targetAmount || 1)) * 100
-                          ).toFixed(0)}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-600">
-                        {currentRaised} RON raised
-                      </span>
-                      <span className="text-gray-600">
-                        of {targetAmount} RON
-                      </span>
-                    </div>
+                        ).toFixed(0)}%`,
+                      }}
+                    />
                   </div>
-                )}
+                  <div className="flex justify-between items-center text-xs text-gray-800/90">
+                    <span>{currentRaised} RON strânși</span>
+                    <span>din {targetAmount} RON</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Summary / Preview (keeps existing logic via PayLinkPreview) */}
+              <div className="bg-black/10 rounded-lg p-3 md:p-4 space-y-3">
+                <div className="text-center mb-3 md:mb-4">
+                  <div className="text-2xl md:text-3xl font-bold text-black">
+                    {amount ? `RON ${amount.toFixed(2)}` : ""}
+                  </div>
+                </div>
 
                 {/* Live preview synced with amount selected in PayWidget */}
                 <PayLinkPreview
@@ -210,42 +236,81 @@ export default async function PublicPayLinkPage({
                 />
               </div>
             </div>
+          </div>
 
-            <div className="md:w-1/2 p-6">
-              <div className="space-y-4">
-                {!sellerOnboarded && (
-                  <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-sm px-3 py-2">
-                    Momentan acest comerciant nu poate accepta plăți. Revino mai
-                    târziu.
+          {/* Right - Payment form wrapper (Stripe Elements inside PayWidget remain unchanged) */}
+          <div className="bg-white rounded-lg p-4 md:p-6 border shadow-sm">
+            <div className="space-y-4 md:space-y-6">
+              {/* Secure hint and method label (UI only) */}
+              <div className="flex items-center gap-2 text-blue-600">
+                {/* Using an inline SVG to avoid server/client icon import churn here */}
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                  <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
+                <span className="text-sm font-medium">Card</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs md:text-sm text-green-600">
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <rect
+                    x="3"
+                    y="11"
+                    width="18"
+                    height="11"
+                    rx="2"
+                    ry="2"
+                  ></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span>Finalizare sigură și rapidă</span>
+              </div>
+
+              {!sellerOnboarded && (
+                <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-sm px-3 py-2">
+                  Momentan acest comerciant nu poate accepta plăți. Revino mai
+                  târziu.
+                </div>
+              )}
+
+              <div aria-disabled={!sellerOnboarded}>
+                {sellerOnboarded ? (
+                  <PayWidget
+                    slug={slug}
+                    priceType={priceType}
+                    minAmount={minAmount}
+                    requireEmail={collectEmail}
+                    requirePhone={collectPhone}
+                    requireBilling={collectBillingAddress}
+                    addVat={!!data.addVat}
+                  />
+                ) : (
+                  <div className="h-24 flex items-center justify-center rounded-md border border-dashed border-amber-300 bg-amber-50 text-amber-900 text-sm">
+                    Plățile nu sunt disponibile pentru acest link momentan.
                   </div>
                 )}
-
-                <div aria-disabled={!sellerOnboarded}>
-                  <div className="mt-2">
-                    {sellerOnboarded ? (
-                      <PayWidget
-                        slug={slug}
-                        priceType={priceType}
-                        minAmount={minAmount}
-                        requireEmail={collectEmail}
-                        requirePhone={collectPhone}
-                        requireBilling={collectBillingAddress}
-                        addVat={!!data.addVat}
-                      />
-                    ) : (
-                      <div className="h-24 flex items-center justify-center rounded-md border border-dashed border-amber-300 bg-amber-50 text-amber-900 text-sm">
-                        Plățile nu sunt disponibile pentru acest link momentan.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* The PayWidget contains the pay button */}
-
-                <div className="text-xs text-center text-gray-500 mt-4">
-                  Powered by PayLink • Termeni • Confidențialitate
-                </div>
               </div>
+
+              <p className="text-xs text-gray-500 text-center leading-relaxed">
+                Securizat prin PayLink • Termeni • Confidențialitate
+              </p>
             </div>
           </div>
         </div>
