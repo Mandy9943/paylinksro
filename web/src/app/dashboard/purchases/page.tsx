@@ -49,19 +49,21 @@ export default function PurchasesPage() {
                   <div className="font-medium flex items-center gap-2">
                     {it.payLinkName}
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                      {it.serviceType === "SERVICE" ? "Serviciu" : "Produs digital"}
+                      {it.serviceType === "SERVICE"
+                        ? "Serviciu"
+                        : "Produs digital"}
                     </span>
                   </div>
-                {it.productName ? (
-                  <div className="text-sm text-muted-foreground">
-                    {it.productName}
-                  </div>
-                ) : null}
-                {it.succeededAt ? (
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(it.succeededAt).toLocaleString()}
-                  </div>
-                ) : null}
+                  {it.productName ? (
+                    <div className="text-sm text-muted-foreground">
+                      {it.productName}
+                    </div>
+                  ) : null}
+                  {it.succeededAt ? (
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(it.succeededAt).toLocaleString()}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

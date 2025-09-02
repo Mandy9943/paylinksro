@@ -42,7 +42,9 @@ export async function listPurchasesForEmail(
         select: {
           name: true,
           serviceType: true,
-          product: { select: { name: true, assets: true, coverImageUrl: true } },
+          product: {
+            select: { name: true, assets: true, coverImageUrl: true },
+          },
           service: { select: { title: true, coverImageUrl: true } },
         },
       },
@@ -51,7 +53,7 @@ export async function listPurchasesForEmail(
 
   return tx.map((t) => {
     const isDigital = (t.payLink as any).serviceType === "DIGITAL_PRODUCT";
-    const raw = isDigital ? ((t.payLink.product?.assets as any) || []) : [];
+    const raw = isDigital ? (t.payLink.product?.assets as any) || [] : [];
     const assets: { key: string; name?: string | null }[] = [];
     if (Array.isArray(raw)) {
       for (const it of raw) {
@@ -97,7 +99,7 @@ export async function presignDownloadForBuyer(
       payLinkId: body.payLinkId,
       customerId: { in: customers.map((c) => c.id) },
       status: "SUCCEEDED",
-  payLink: { serviceType: "DIGITAL_PRODUCT" },
+      payLink: { serviceType: "DIGITAL_PRODUCT" },
     },
     select: { payLink: { select: { product: { select: { assets: true } } } } },
   });

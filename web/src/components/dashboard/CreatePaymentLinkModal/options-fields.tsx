@@ -9,7 +9,6 @@ export function OptionsFields() {
 
   return (
     <div className="mb-8">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Opțiuni</h3>
       <div className="space-y-4">
         <Controller
           name="addVat"

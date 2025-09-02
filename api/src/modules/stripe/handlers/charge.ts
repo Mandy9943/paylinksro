@@ -106,7 +106,9 @@ export async function onChargeSucceeded(event: any) {
 
   // Send buyer receipt email (always, if we have recipient)
   if (recipient) {
-    const amountStr = `${(amountMinor / 100).toFixed(2)} ${(link.currency || "RON").toUpperCase()}`;
+    const amountStr = `${(amountMinor / 100).toFixed(2)} ${(
+      link.currency || "RON"
+    ).toUpperCase()}`;
     const subject = `Plată procesată — ${link.name}`;
     const extraForType =
       link.serviceType === "DIGITAL_PRODUCT"
@@ -142,15 +144,26 @@ export async function onChargeSucceeded(event: any) {
       where: { id: link.userId },
       select: { email: true },
     });
-    const notifySeller = (settings?.emailNotifications ?? true) && !!seller?.email;
+    const notifySeller =
+      (settings?.emailNotifications ?? true) && !!seller?.email;
     if (notifySeller) {
-      const amountStr = `${(amountMinor / 100).toFixed(2)} ${(link.currency || "RON").toUpperCase()}`;
-      const buyerName = (charge?.billing_details?.name as string | undefined) || null;
-      const buyerEmail = (charge?.billing_details?.email as string | undefined) || null;
+      const amountStr = `${(amountMinor / 100).toFixed(2)} ${(
+        link.currency || "RON"
+      ).toUpperCase()}`;
+      const buyerName =
+        (charge?.billing_details?.name as string | undefined) || null;
+      const buyerEmail =
+        (charge?.billing_details?.email as string | undefined) || null;
       const subjectSeller = `Plată primită — ${link.name}`;
-      const buyerLine = buyerName || buyerEmail ?
-        `<p style="color:#475569; font-size: 12px;">De la: ${[buyerName, buyerEmail].filter(Boolean).join(" · ")}</p>`
-        : "";
+      const buyerLine =
+        buyerName || buyerEmail
+          ? `<p style="color:#475569; font-size: 12px;">De la: ${[
+              buyerName,
+              buyerEmail,
+            ]
+              .filter(Boolean)
+              .join(" · ")}</p>`
+          : "";
       const htmlSeller = `
         <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
           <h2>Plată primită</h2>
@@ -159,7 +172,11 @@ export async function onChargeSucceeded(event: any) {
           <p style="color:#64748b; font-size: 12px; margin-top: 24px;">Poți vedea tranzacțiile în dashboard.</p>
         </div>
       `;
-      await sendMail({ to: seller.email!, subject: subjectSeller, html: htmlSeller });
+      await sendMail({
+        to: seller.email!,
+        subject: subjectSeller,
+        html: htmlSeller,
+      });
     }
   } catch {
     // ignore seller notification failures

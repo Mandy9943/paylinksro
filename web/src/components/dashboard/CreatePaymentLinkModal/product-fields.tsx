@@ -115,16 +115,6 @@ export function ProductFields() {
 
   return (
     <div className="mb-8">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">
-        {type === "servicii"
-          ? "Serviciu"
-          : type === "produse-digitale"
-          ? "Produs Digital"
-          : type === "donatii"
-          ? "Donație"
-          : "Fundraising"}
-      </h3>
-
       {type === "servicii" && (
         <div className="space-y-4">
           <Controller
@@ -162,7 +152,7 @@ export function ProductFields() {
                   htmlFor="description"
                   className="text-sm font-medium text-gray-700"
                 >
-                  Descriere
+                  Descriere (opțional)
                 </Label>
                 <Textarea
                   id="description"
@@ -176,7 +166,7 @@ export function ProductFields() {
           />
           <div>
             <Label htmlFor="logo" className="text-sm font-medium text-gray-700">
-              Logo
+              Logo (opțional)
             </Label>
             <div className="mt-1 flex items-center space-x-3">
               <Button
@@ -233,7 +223,7 @@ export function ProductFields() {
                   htmlFor="product-description"
                   className="text-sm font-medium text-gray-700"
                 >
-                  Descriere
+                  Descriere (opțional)
                 </Label>
                 <Textarea
                   id="product-description"
@@ -373,7 +363,7 @@ export function ProductFields() {
                   htmlFor="donation-description"
                   className="text-sm font-medium text-gray-700"
                 >
-                  Descriere
+                  Descriere (opțional)
                 </Label>
                 <Textarea
                   id="donation-description"

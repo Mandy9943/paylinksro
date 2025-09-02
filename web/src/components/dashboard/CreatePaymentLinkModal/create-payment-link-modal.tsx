@@ -5,7 +5,6 @@ import { usePayLinks } from "@/hooks/usePayLinks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { ColorPicker } from "./color-picker";
 import { OptionsFields } from "./options-fields";
 import { PreviewPane } from "./preview-pane";
 import { PriceFields } from "./price-fields";
@@ -173,7 +172,7 @@ export default function CreatePaymentLinkModal({
               <ProductFields />
               <OptionsFields />
               <PriceFields />
-              <ColorPicker />
+              {/* <ColorPicker /> */}
             </div>
             {/* Right Panel - Preview */}
             <PreviewPane />
