@@ -8,6 +8,7 @@ export type PurchaseItem = {
   succeededAt: string | null;
   productName: string | null;
   productCoverImageUrl: string | null;
+  serviceType?: "DIGITAL_PRODUCT" | "SERVICE";
   assets: { key: string; name?: string | null }[];
 };
 

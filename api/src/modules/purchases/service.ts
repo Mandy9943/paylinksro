@@ -9,6 +9,7 @@ export type PurchaseItem = {
   succeededAt: Date | null;
   productName: string | null;
   productCoverImageUrl: string | null;
+  serviceType?: "DIGITAL_PRODUCT" | "SERVICE";
   assets: { key: string; name?: string | null }[];
 };
 
@@ -29,10 +30,10 @@ export async function listPurchasesForEmail(
     where: {
       customerId: { in: customerIds },
       status: "SUCCEEDED",
-      payLink: { serviceType: "DIGITAL_PRODUCT" },
+      payLink: { serviceType: { in: ["DIGITAL_PRODUCT", "SERVICE"] as any } },
     },
     orderBy: { succeededAt: "desc" },
-  select: {
+    select: {
       id: true,
       payLinkId: true,
       succeededAt: true,
@@ -40,14 +41,17 @@ export async function listPurchasesForEmail(
       payLink: {
         select: {
           name: true,
-      product: { select: { name: true, assets: true, coverImageUrl: true } },
+          serviceType: true,
+          product: { select: { name: true, assets: true, coverImageUrl: true } },
+          service: { select: { title: true, coverImageUrl: true } },
         },
       },
     },
   });
 
   return tx.map((t) => {
-    const raw = (t.payLink.product?.assets as any) || [];
+    const isDigital = (t.payLink as any).serviceType === "DIGITAL_PRODUCT";
+    const raw = isDigital ? ((t.payLink.product?.assets as any) || []) : [];
     const assets: { key: string; name?: string | null }[] = [];
     if (Array.isArray(raw)) {
       for (const it of raw) {
@@ -66,8 +70,13 @@ export async function listPurchasesForEmail(
       payLinkName: t.payLink.name,
       sellerId: t.userId,
       succeededAt: t.succeededAt,
-      productName: t.payLink.product?.name ?? null,
-  productCoverImageUrl: (t.payLink.product as any)?.coverImageUrl ?? null,
+      productName:
+        t.payLink.product?.name ?? t.payLink.service?.title ?? t.payLink.name,
+      productCoverImageUrl:
+        (t.payLink.product as any)?.coverImageUrl ||
+        (t.payLink.service as any)?.coverImageUrl ||
+        null,
+      serviceType: (t.payLink as any).serviceType,
       assets,
     };
   });
@@ -88,7 +97,7 @@ export async function presignDownloadForBuyer(
       payLinkId: body.payLinkId,
       customerId: { in: customers.map((c) => c.id) },
       status: "SUCCEEDED",
-      payLink: { serviceType: "DIGITAL_PRODUCT" },
+  payLink: { serviceType: "DIGITAL_PRODUCT" },
     },
     select: { payLink: { select: { product: { select: { assets: true } } } } },
   });

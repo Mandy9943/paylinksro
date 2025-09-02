@@ -2,8 +2,8 @@
 import { presignDownload } from "@/api/purchases";
 import { Button } from "@/components/ui/button";
 import { usePurchases } from "@/hooks/use-purchases";
-import { useState } from "react";
 import Image from "next/image";
+import { useState } from "react";
 
 export default function PurchasesPage() {
   const { items, isLoading, error } = usePurchases();
@@ -12,7 +12,21 @@ export default function PurchasesPage() {
   if (isLoading) return <div className="p-6">Se încarcă...</div>;
   if (error)
     return <div className="p-6 text-red-600">Eroare la încărcare.</div>;
-  if (!items.length) return <div className="p-6">Nu aveți achiziții încă.</div>;
+  if (!items.length)
+    return (
+      <div className="p-8 text-center">
+        <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+          {/* Simple receipt-like icon using emoji or fallback; could replace with lucide icon */}
+          <span className="text-slate-400 text-xl">📦</span>
+        </div>
+        <h3 className="text-lg font-medium text-slate-900 mb-2">
+          Nu aveți achiziții încă
+        </h3>
+        <p className="text-sm text-slate-500">
+          Produsele digitale cumpărate vor apărea aici după plată.
+        </p>
+      </div>
+    );
 
   return (
     <div className="p-6 space-y-6">
@@ -31,7 +45,13 @@ export default function PurchasesPage() {
                     className="rounded object-cover"
                   />
                 ) : null}
-                <div className="font-medium">{it.payLinkName}</div>
+                <div>
+                  <div className="font-medium flex items-center gap-2">
+                    {it.payLinkName}
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                      {it.serviceType === "SERVICE" ? "Serviciu" : "Produs digital"}
+                    </span>
+                  </div>
                 {it.productName ? (
                   <div className="text-sm text-muted-foreground">
                     {it.productName}
@@ -42,9 +62,10 @@ export default function PurchasesPage() {
                     {new Date(it.succeededAt).toLocaleString()}
                   </div>
                 ) : null}
+                </div>
               </div>
             </div>
-            {it.assets?.length ? (
+            {it.serviceType !== "SERVICE" && it.assets?.length ? (
               <ul className="mt-3 space-y-2">
                 {it.assets.map((a) => (
                   <li key={a.key} className="flex items-center justify-between">
@@ -75,7 +96,9 @@ export default function PurchasesPage() {
               </ul>
             ) : (
               <div className="text-sm text-muted-foreground mt-2">
-                Fără fișiere atașate.
+                {it.serviceType === "SERVICE"
+                  ? "Acest serviciu nu are fișiere de descărcat."
+                  : "Fără fișiere atașate."}
               </div>
             )}
           </div>

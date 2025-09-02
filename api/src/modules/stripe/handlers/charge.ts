@@ -87,9 +87,9 @@ export async function onChargeSucceeded(event: any) {
     // ignore
   }
 
-  // Digital product delivery: send a purchases page link with auto-login token
-  let extraHtml = "";
-  if (link.serviceType === "DIGITAL_PRODUCT" && recipient) {
+  // Build deep-link for the buyer (auto-login + redirect to purchases)
+  let purchasesDeepLink: string | null = null;
+  if (recipient) {
     try {
       const shortToken = await createShortLivedLoginToken(recipient, 60 * 24); // 24h short token
       const verifyUrl = new URL("/api/v1/auth/verify", env.API_ORIGIN);
@@ -98,38 +98,31 @@ export async function onChargeSucceeded(event: any) {
         "redirectTo",
         new URL("/dashboard/purchases", env.APP_ORIGIN).toString()
       );
-      extraHtml = `
-        <p>Puteți descărca produsul digital din pagina achizițiilor:</p>
-        <p><a href="${verifyUrl.toString()}">Deschide achizițiile mele</a></p>
-        <p style="color:#64748b; font-size: 12px;">Linkul de autentificare expiră în 24 de ore.</p>
-      `;
+      purchasesDeepLink = verifyUrl.toString();
     } catch {
-      // fallback to simple note
-      extraHtml = `<p>Puteți vedea achizițiile dvs. în dashboard.</p>`;
+      purchasesDeepLink = null;
     }
   }
 
-  // Respect user's email notification setting
-  let shouldSendEmail = true;
-  try {
-    const pref = await prisma.userSettings.findUnique({
-      where: { userId: link.userId },
-      select: { emailNotifications: true },
-    });
-    shouldSendEmail = pref?.emailNotifications ?? true;
-  } catch {
-    // default stays true
-  }
-
-  if (recipient && shouldSendEmail) {
-    const subject = `Plată primită — ${link.name}`;
-    const amountRON = (amountMinor / 100).toFixed(2);
+  // Send buyer receipt email (always, if we have recipient)
+  if (recipient) {
+    const amountStr = `${(amountMinor / 100).toFixed(2)} ${(link.currency || "RON").toUpperCase()}`;
+    const subject = `Plată procesată — ${link.name}`;
+    const extraForType =
+      link.serviceType === "DIGITAL_PRODUCT"
+        ? `<p>Poți descărca fișierele din <strong>Achizițiile mele</strong>.</p>`
+        : `<p>Găsești detaliile achiziției în <strong>Achizițiile mele</strong>.</p>`;
+    const deepLinkHtml = purchasesDeepLink
+      ? `<p><a href="${purchasesDeepLink}">Deschide Achizițiile mele</a></p>
+         <p style="color:#64748b; font-size: 12px;">Linkul de autentificare expiră în 24 de ore.</p>`
+      : "";
     const html = `
       <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
         <h2>Mulțumim!</h2>
-        <p>Am primit plata de <strong>${amountRON} RON</strong> pentru <strong>${link.name}</strong>.</p>
-        ${extraHtml}
-        <p style="color:#64748b; font-size: 12px; margin-top: 24px;">Dacă aveți întrebări, răspundeți la acest email.</p>
+        <p>Am procesat plata de <strong>${amountStr}</strong> pentru <strong>${link.name}</strong>.</p>
+        ${extraForType}
+        ${deepLinkHtml}
+        <p style="color:#64748b; font-size: 12px; margin-top: 24px;">Dacă ai întrebări, răspunde la acest email.</p>
       </div>
     `;
     try {
@@ -137,6 +130,39 @@ export async function onChargeSucceeded(event: any) {
     } catch {
       // ignore
     }
+  }
+
+  // Send seller notification (respect seller's email notification preference)
+  try {
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId: link.userId },
+      select: { emailNotifications: true },
+    });
+    const seller = await prisma.user.findUnique({
+      where: { id: link.userId },
+      select: { email: true },
+    });
+    const notifySeller = (settings?.emailNotifications ?? true) && !!seller?.email;
+    if (notifySeller) {
+      const amountStr = `${(amountMinor / 100).toFixed(2)} ${(link.currency || "RON").toUpperCase()}`;
+      const buyerName = (charge?.billing_details?.name as string | undefined) || null;
+      const buyerEmail = (charge?.billing_details?.email as string | undefined) || null;
+      const subjectSeller = `Plată primită — ${link.name}`;
+      const buyerLine = buyerName || buyerEmail ?
+        `<p style="color:#475569; font-size: 12px;">De la: ${[buyerName, buyerEmail].filter(Boolean).join(" · ")}</p>`
+        : "";
+      const htmlSeller = `
+        <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+          <h2>Plată primită</h2>
+          <p>Ai primit o plată de <strong>${amountStr}</strong> pentru <strong>${link.name}</strong>.</p>
+          ${buyerLine}
+          <p style="color:#64748b; font-size: 12px; margin-top: 24px;">Poți vedea tranzacțiile în dashboard.</p>
+        </div>
+      `;
+      await sendMail({ to: seller.email!, subject: subjectSeller, html: htmlSeller });
+    }
+  } catch {
+    // ignore seller notification failures
   }
 }
 
