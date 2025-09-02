@@ -5,6 +5,7 @@ import { usePayLinks } from "@/hooks/usePayLinks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { toast } from "sonner";
 import { OptionsFields } from "./options-fields";
 import { PreviewPane } from "./preview-pane";
 import { PriceFields } from "./price-fields";
@@ -12,7 +13,6 @@ import { ProductFields } from "./product-fields";
 import { createPaymentLinkSchema } from "./schema";
 import { TypeSelect } from "./type-select";
 import type { CreatePaymentLinkFormValues } from "./types";
-import { toast } from "sonner";
 
 interface CreatePaymentLinkModalProps {
   isOpen: boolean;
