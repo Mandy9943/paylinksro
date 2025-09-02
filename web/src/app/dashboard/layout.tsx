@@ -53,6 +53,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
     transactions: "Tranzacții",
     customers: "Clienți",
     analytics: "Analiză",
+    purchases: "Achizițiile mele",
     affiliate: "Program de Afiliere",
     payouts: "Plăți",
     settings: "Setări",

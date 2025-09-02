@@ -1,10 +1,11 @@
+import { env } from "../../../config/env.js";
 import {
   monthStartUTC,
   splitBaseApplicationFeeMinor,
 } from "../../../config/fees.js";
 import { prisma } from "../../../lib/prisma.js";
-import { presignGetUrl } from "../../../lib/r2.js";
 import { sendMail } from "../../../services/mailer.js";
+import { createShortLivedLoginToken } from "../../auth/service.js";
 import {
   findPayLinkBasic,
   retrievePIIfNeeded,
@@ -86,40 +87,25 @@ export async function onChargeSucceeded(event: any) {
     // ignore
   }
 
-  // Digital product delivery in email (unchanged logic)
+  // Digital product delivery: send a purchases page link with auto-login token
   let extraHtml = "";
-  if (link.serviceType === "DIGITAL_PRODUCT") {
-    const raw = link.product?.assets as any;
-    const items: { key: string; name?: string }[] = [];
-    if (Array.isArray(raw)) {
-      for (const it of raw) {
-        if (typeof it === "string") items.push({ key: it });
-        else if (it && typeof it === "object") {
-          if (typeof it.key === "string")
-            items.push({ key: it.key, name: (it as any).name });
-          else if (typeof (it as any).r2Key === "string")
-            items.push({ key: (it as any).r2Key, name: (it as any).name });
-        }
-      }
-    }
-    if (items.length) {
-      const links = await Promise.all(
-        items.map(async (it) => ({
-          url: await presignGetUrl({
-            key: it.key,
-            expiresInSeconds: 60 * 60 * 24,
-          }),
-          name: it.name || it.key.split("/").pop() || "Descărcare",
-        }))
+  if (link.serviceType === "DIGITAL_PRODUCT" && recipient) {
+    try {
+      const shortToken = await createShortLivedLoginToken(recipient, 60 * 24); // 24h short token
+      const verifyUrl = new URL("/api/v1/auth/verify", env.API_ORIGIN);
+      verifyUrl.searchParams.set("token", shortToken);
+      verifyUrl.searchParams.set(
+        "redirectTo",
+        new URL("/dashboard/purchases", env.APP_ORIGIN).toString()
       );
       extraHtml = `
-        <p>Descărcările dvs. (valabile 24 de ore):</p>
-        <ul>
-          ${links
-            .map((l) => `<li><a href="${l.url}">${l.name}</a></li>`)
-            .join("")}
-        </ul>
+        <p>Puteți descărca produsul digital din pagina achizițiilor:</p>
+        <p><a href="${verifyUrl.toString()}">Deschide achizițiile mele</a></p>
+        <p style="color:#64748b; font-size: 12px;">Linkul de autentificare expiră în 24 de ore.</p>
       `;
+    } catch {
+      // fallback to simple note
+      extraHtml = `<p>Puteți vedea achizițiile dvs. în dashboard.</p>`;
     }
   }
 

@@ -18,6 +18,12 @@ export async function sendMail({
 }) {
   const from = env.MAIL_FROM || "PayLinks <salut@paylinks.ro>";
 
+  // Suppress real emails during tests
+  if (env.NODE_ENV === "test") {
+    logger.info({ to, subject }, "Email suppressed (test mode)");
+    return { mocked: true, suppressed: true } as any;
+  }
+
   if (!resend) {
     // Dev fallback: log email contents
     logger.info(

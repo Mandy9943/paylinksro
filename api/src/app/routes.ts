@@ -5,10 +5,11 @@ import { analyticsRouter } from "../modules/analytics/routes.js";
 import { authRouter } from "../modules/auth/routes.js";
 import { customersRouter } from "../modules/customers/routes.js";
 import { payLinksRouter } from "../modules/paylinks/routes.js";
+import purchasesRouter from "../modules/purchases/routes.js";
+import { settingsRouter } from "../modules/settings/routes.js";
 import { stripeRouter } from "../modules/stripe/routes.js";
 import { transactionsRouter } from "../modules/transactions/routes.js";
 import { uploadsRouter } from "../modules/uploads/routes.js";
-import { settingsRouter } from "../modules/settings/routes.js";
 
 export const router = Router();
 
@@ -20,6 +21,7 @@ router.use("/transactions", transactionsRouter);
 router.use("/customers", customersRouter);
 router.use("/analytics", analyticsRouter);
 router.use("/settings", settingsRouter);
+router.use("/purchases", purchasesRouter);
 
 // Webhook lives outside of /api/v1 to avoid auth/validation middlewares; we expose it at root in app.ts
 // Export a lightweight sub-router to mount it from app.ts would be cleaner, but we can handle here too by exporting the handler.

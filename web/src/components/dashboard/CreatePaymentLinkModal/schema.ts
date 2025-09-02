@@ -29,6 +29,15 @@ export const createPaymentLinkSchema = z
     targetAmount: z.number().nullable().optional(),
   })
   .superRefine((val, ctx) => {
+    // Digital products must collect email
+    if (val.type === "produse-digitale" && val.collectEmail !== true) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["collectEmail"],
+        message:
+          "Pentru produse digitale, emailul cumpărătorului este obligatoriu.",
+      });
+    }
     if (val.type !== "fundraising" && val.priceType === "fixed") {
       if (val.amount == null || val.amount < 5) {
         ctx.addIssue({

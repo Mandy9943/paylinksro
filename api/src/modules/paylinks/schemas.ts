@@ -75,9 +75,28 @@ export const createPayLinkSchema = createPayLinkBase.superRefine((val, ctx) => {
       });
     }
   }
+  // Digital products must collect buyer email
+  if (val.serviceType === "DIGITAL_PRODUCT" && val.collectEmail !== true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["collectEmail"],
+      message: "Digital products require collecting the buyer's email.",
+    });
+  }
 });
 
-export const updatePayLinkSchema = createPayLinkBase.partial();
+export const updatePayLinkSchema = createPayLinkBase
+  .partial()
+  .superRefine((val, ctx) => {
+    // When updating, if the link is set to DIGITAL_PRODUCT (or already is) and collectEmail is provided and false, reject.
+    if (val.serviceType === "DIGITAL_PRODUCT" && val.collectEmail === false) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["collectEmail"],
+        message: "Digital products require collecting the buyer's email.",
+      });
+    }
+  });
 
 export const listQuerySchema = z.object({
   cursor: z.string().optional(),

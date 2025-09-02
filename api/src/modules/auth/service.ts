@@ -8,6 +8,29 @@ import { sendMail } from "../../services/mailer.js";
 
 const MAGIC_LINK_TTL_MINUTES = 15;
 
+export async function createShortLivedLoginToken(
+  email: string,
+  ttlMinutes = 60 * 24
+) {
+  const normalizedEmail = email.toLowerCase().trim();
+  // Ensure user exists
+  let user = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  });
+  if (!user) {
+    user = await prisma.user.create({
+      data: { email: normalizedEmail, active: true },
+    });
+  }
+  const token = randomToken(32);
+  const tokenHash = sha256(token);
+  const expiresAt = addMinutes(new Date(), ttlMinutes);
+  await prisma.magicLinkToken.create({
+    data: { userId: user.id, email: normalizedEmail, tokenHash, expiresAt },
+  });
+  return token;
+}
+
 export async function requestMagicLink(email: string, redirectTo?: string) {
   const normalizedEmail = email.toLowerCase().trim();
 

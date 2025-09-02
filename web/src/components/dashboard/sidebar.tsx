@@ -29,6 +29,7 @@ const menuItems = [
   { id: "transactions", label: "Tranzacții", icon: CreditCard },
   { id: "customers", label: "Clienți", icon: Users },
   { id: "analytics", label: "Analiză", icon: BarChart3 },
+  { id: "purchases", label: "Achiziții", icon: CreditCard },
   { id: "affiliate", label: "Afiliere", icon: Gift },
   { id: "payouts", label: "Plăți", icon: Building2 },
   { id: "settings", label: "Setări", icon: Settings },
