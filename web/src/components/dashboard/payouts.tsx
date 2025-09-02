@@ -1,7 +1,7 @@
 "use client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import {
   Dialog,
@@ -158,7 +158,10 @@ export default function Payouts() {
       <Alert className="border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-100">
         <Clock className="h-4 w-4" />
         <AlertDescription>
-          Primele plăți sunt reținute timp de 7 zile din motive de siguranță și conformitate cu reglementările. Nu îți face griji, imediat ce devin disponibile le vei putea retrage. Între timp, poți crea oricâte linkuri dorești și poți primi plăți direct în contul tău PayLinks!
+          Primele plăți sunt reținute timp de 7 zile din motive de siguranță și
+          conformitate cu reglementările. Nu îți face griji, imediat ce devin
+          disponibile le vei putea retrage. Între timp, poți crea oricâte
+          linkuri dorești și poți primi plăți direct în contul tău PayLinks!
         </AlertDescription>
       </Alert>
       {/* Balance Cards */}
