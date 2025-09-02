@@ -12,6 +12,7 @@ import { ProductFields } from "./product-fields";
 import { createPaymentLinkSchema } from "./schema";
 import { TypeSelect } from "./type-select";
 import type { CreatePaymentLinkFormValues } from "./types";
+import { toast } from "sonner";
 
 interface CreatePaymentLinkModalProps {
   isOpen: boolean;
@@ -110,8 +111,33 @@ export default function CreatePaymentLinkModal({
     }
 
     try {
-      await createPayLink(payload);
+      const created = await createPayLink(payload);
       mutate();
+      // Notify the user with the public link and a quick copy action (RO)
+      if (typeof window !== "undefined") {
+        const url = `${window.location.origin}/p/${created.slug}`;
+        toast.success("Linkul de plată a fost creat", {
+          description: (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2"
+            >
+              {url}
+            </a>
+          ),
+          action: {
+            label: "Copiază",
+            onClick: async () => {
+              try {
+                await navigator.clipboard.writeText(url);
+                toast.success("Link copiat");
+              } catch {}
+            },
+          },
+        });
+      }
       // Reset the form so the modal starts fresh next time it's opened
       if (typeof window !== "undefined") {
         try {
