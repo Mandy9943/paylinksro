@@ -213,6 +213,31 @@ describe("PayLinks endpoints", () => {
     expect(second.body.slug).toMatch(/^course-\d+$/);
   });
 
+  it("fails if email is not provided for digital products", async () => {
+    const res = await request(app)
+      .post("/api/v1/paylinks")
+      .set("Authorization", `Bearer ${u1.token}`)
+      .send({
+        name: "Course",
+        slug: "course",
+        priceType: "FIXED",
+        amount: 5,
+        serviceType: "DIGITAL_PRODUCT",
+      })
+      .expect(400);
+    expect(res.body?.error).toBe("ValidationError");
+    const emailErrs: string[] | undefined =
+      res.body?.details?.fieldErrors?.collectEmail;
+    console.log("emailErrs", emailErrs);
+
+    expect(Array.isArray(emailErrs)).toBe(true);
+    expect(
+      emailErrs?.some((m) =>
+        /Digital products require collecting the buyer's email./i.test(m)
+      )
+    ).toBe(true);
+  });
+
   it("lists paylinks for the owner", async () => {
     const res = await request(app)
       .get("/api/v1/paylinks")
