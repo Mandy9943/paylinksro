@@ -1,9 +1,9 @@
 "use client";
 import { captureTokenFromHash } from "@/lib/api";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 
-export default function AuthCallback() {
+function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -40,4 +40,12 @@ export default function AuthCallback() {
   }, [router, searchParams]);
 
   return null;
+}
+
+export default function page() {
+  return (
+    <Suspense>
+      <AuthCallback />
+    </Suspense>
+  );
 }
