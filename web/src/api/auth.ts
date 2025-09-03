@@ -1,9 +1,15 @@
 import { api } from "@/lib/api";
 
 // Simple API wrappers for auth
-export async function requestMagicLink(email: string, redirectTo?: string) {
+export async function requestMagicLink(
+  email: string,
+  redirectTo?: string,
+  refCode?: string | null
+) {
   const target = redirectTo ?? `${window.location.origin}/auth/callback`;
-  const res = await api.post("/v1/auth/request", { email, redirectTo: target });
+  const payload: Record<string, unknown> = { email, redirectTo: target };
+  if (refCode && refCode.trim().length > 0) payload.refCode = refCode.trim();
+  const res = await api.post("/v1/auth/request", payload);
   return res.data as { ok: boolean };
 }
 

@@ -11,6 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useAffiliateSummary } from "@/hooks/use-affiliates";
+import { requestPayoutAllWithDetails } from "@/api/affiliates";
 import {
   Copy,
   DollarSign,
@@ -25,57 +27,22 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
+import { useState } from "react";
 
-// Mock affiliate data
-const affiliateStats = {
-  totalEarnings: "RON 2,847.50",
-  monthlyEarnings: "RON 485.20",
-  totalReferrals: 47,
-  activeReferrals: 23,
-  conversionRate: "12.3%",
-  clickThroughRate: "8.7%",
-};
+function formatRON(minor: number | undefined | null) {
+  const v = (minor ?? 0) / 100;
+  return `RON ${v.toFixed(2)}`;
+}
 
-const recentReferrals = [
-  {
-    id: "1",
-    customerName: "Maria Popescu",
-    email: "maria.popescu@gmail.com",
-    signupDate: "2 Aug, 14:30",
-    firstPurchase: "RON 150.00",
-    commission: "RON 0.75",
-    status: "Active",
-  },
-  {
-    id: "2",
-    customerName: "Alexandru Ionescu",
-    email: "alex.ionescu@yahoo.com",
-    signupDate: "1 Aug, 09:15",
-    firstPurchase: "RON 299.99",
-    commission: "RON 1.50",
-    status: "Active",
-  },
-  {
-    id: "3",
-    customerName: "Elena Georgescu",
-    email: "elena.g@hotmail.com",
-    signupDate: "31 Jul, 16:45",
-    firstPurchase: "RON 89.00",
-    commission: "RON 0.45",
-    status: "Pending",
-  },
-  {
-    id: "4",
-    customerName: "Mihai Radu",
-    email: "mihai.radu@gmail.com",
-    signupDate: "30 Jul, 11:20",
-    firstPurchase: "RON 450.00",
-    commission: "RON 2.25",
-    status: "Active",
-  },
-];
+// simple mapping helper
+const statusBadge = (s: string) =>
+  s === "AVAILABLE" || s === "PAID"
+    ? "Activ"
+    : s === "PENDING"
+    ? "În așteptare"
+    : s;
 
 const promotionalMaterials = [
   {
@@ -105,7 +72,16 @@ const promotionalMaterials = [
 ];
 
 export default function AffiliateProgram() {
-  const [referralLink] = useState("https://paylink.ro/ref/PAY_83b4d9e1f2a7");
+  const { data, refresh } = useAffiliateSummary();
+  const referralLink = useMemo(() => {
+    const code = data?.code || "";
+    // Using ref param in URL per backend contract
+    const origin =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://paylink.ro";
+    return code ? `${origin}/?ref=${encodeURIComponent(code)}` : `${origin}/`;
+  }, [data?.code]);
 
   const copyReferralLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -207,13 +183,19 @@ export default function AffiliateProgram() {
             <div className="text-right">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
                 <div className="text-3xl font-bold text-emerald-600 mb-1">
-                  {affiliateStats.totalEarnings}
+                  {formatRON(data?.totals?.lifetimeEarned)}
                 </div>
                 <p className="text-sm text-slate-600 mb-3">Câștiguri totale</p>
                 <div className="text-lg font-semibold text-slate-900">
-                  {affiliateStats.monthlyEarnings}
+                  {formatRON(data?.totals?.available)}
                 </div>
-                <p className="text-xs text-slate-500">Luna aceasta</p>
+                <p className="text-xs text-slate-500 mb-3">Disponibil</p>
+                <BankWithdraw
+                  available={data?.totals?.available ?? 0}
+                  onDone={async () => {
+                    await refresh();
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -228,7 +210,7 @@ export default function AffiliateProgram() {
               <div>
                 <p className="text-xs text-slate-500 mb-1">Referrals Totale</p>
                 <div className="text-2xl font-bold text-slate-900">
-                  {affiliateStats.totalReferrals}
+                  {data?.totals?.referrals ?? 0}
                 </div>
                 <p className="text-xs text-emerald-600 font-medium">
                   +5 luna aceasta
@@ -246,12 +228,8 @@ export default function AffiliateProgram() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-500 mb-1">Rata de Conversie</p>
-                <div className="text-2xl font-bold text-slate-900">
-                  {affiliateStats.conversionRate}
-                </div>
-                <p className="text-xs text-emerald-600 font-medium">
-                  +2.1% față de luna trecută
-                </p>
+                <div className="text-2xl font-bold text-slate-900">—</div>
+                <p className="text-xs text-slate-600">În curând</p>
               </div>
               <div className="p-2 bg-emerald-100 rounded-lg">
                 <TrendingUp className="w-5 h-5 text-emerald-600" />
@@ -267,9 +245,7 @@ export default function AffiliateProgram() {
                 <p className="text-xs text-slate-500 mb-1">
                   Click-Through Rate
                 </p>
-                <div className="text-2xl font-bold text-slate-900">
-                  {affiliateStats.clickThroughRate}
-                </div>
+                <div className="text-2xl font-bold text-slate-900">—</div>
                 <p className="text-xs text-emerald-600 font-medium">
                   Performanță excelentă
                 </p>
@@ -286,9 +262,7 @@ export default function AffiliateProgram() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-500 mb-1">Referrals Active</p>
-                <div className="text-2xl font-bold text-slate-900">
-                  {affiliateStats.activeReferrals}
-                </div>
+                <div className="text-2xl font-bold text-slate-900">—</div>
                 <p className="text-xs text-slate-600">Utilizatori activi</p>
               </div>
               <div className="p-2 bg-orange-100 rounded-lg">
@@ -389,9 +363,9 @@ export default function AffiliateProgram() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentReferrals.map((referral, index) => (
+                {(data?.recent?.commissions || []).map((c, index) => (
                   <TableRow
-                    key={referral.id}
+                    key={c.id}
                     className={`border-b border-slate-100 hover:bg-slate-50/30 transition-colors ${
                       index % 2 === 0 ? "bg-white" : "bg-slate-50/20"
                     }`}
@@ -399,34 +373,32 @@ export default function AffiliateProgram() {
                     <TableCell className="py-2 px-3">
                       <div>
                         <p className="font-medium text-slate-900 text-sm">
-                          {referral.customerName}
+                          {c.referred?.email || "—"}
                         </p>
                         <p className="text-xs text-slate-500">
-                          {referral.signupDate}
+                          {new Date(c.createdAt).toLocaleString()}
                         </p>
                       </div>
                     </TableCell>
                     <TableCell className="py-2 px-3">
                       <div className="text-xs font-medium text-slate-900">
-                        {referral.firstPurchase}
+                        —
                       </div>
                     </TableCell>
                     <TableCell className="py-2 px-3">
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-semibold text-emerald-600">
-                          {referral.commission}
+                          {formatRON(c.amount)}
                         </span>
                         <Badge
                           variant="secondary"
                           className={`text-xs px-2 py-0.5 border-0 ${
-                            referral.status === "Active"
+                            c.status === "AVAILABLE" || c.status === "PAID"
                               ? "bg-emerald-100 text-emerald-700"
                               : "bg-amber-100 text-amber-700"
                           }`}
                         >
-                          {referral.status === "Active"
-                            ? "Activ"
-                            : "În așteptare"}
+                          {statusBadge(c.status)}
                         </Badge>
                       </div>
                     </TableCell>
@@ -466,6 +438,11 @@ export default function AffiliateProgram() {
                     variant="outline"
                     size="sm"
                     className="gap-1.5 h-8 px-3 text-xs border-slate-200 hover:bg-slate-50"
+                    onClick={() => {
+                      if (material.downloadUrl) {
+                        window.open(material.downloadUrl, "_blank");
+                      }
+                    }}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     Descarcă
@@ -501,6 +478,77 @@ export default function AffiliateProgram() {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function BankWithdraw({
+  available,
+  onDone,
+}: {
+  available: number;
+  onDone: () => Promise<void> | void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [details, setDetails] = useState("");
+  const minThreshold = 5000; // 50 RON in minor units
+  const canWithdraw = available >= minThreshold;
+  return (
+    <div className="space-y-2">
+      <Input
+        placeholder="Detalii bancare (IBAN, nume, bancă) — necesare pentru retragere"
+        value={details}
+        onChange={(e) => setDetails(e.target.value)}
+        disabled={loading}
+      />
+      <Button
+        onClick={async () => {
+          if (!canWithdraw || details.trim().length === 0) return;
+          try {
+            setLoading(true);
+            await requestPayoutAllWithDetails(details.trim());
+            toast.success("Cerere de retragere trimisă.");
+            await onDone();
+            setDetails("");
+          } catch (err: unknown) {
+            let msg = "Eroare la retragere";
+            if (
+              typeof err === "object" &&
+              err !== null &&
+              "response" in err &&
+              typeof (err as { response?: unknown }).response === "object" &&
+              (err as { response?: { data?: unknown } }).response?.data &&
+              typeof (
+                err as {
+                  response: {
+                    data?: { error?: { message?: string } };
+                  };
+                }
+              ).response.data === "object"
+            ) {
+              const data = (
+                err as {
+                  response: {
+                    data: { error?: { message?: string } };
+                  };
+                }
+              ).response.data as { error?: { message?: string } };
+              msg = data?.error?.message ?? msg;
+            }
+            toast.error(msg);
+          } finally {
+            setLoading(false);
+          }
+        }}
+        disabled={!canWithdraw || loading || details.trim().length === 0}
+        className="w-full paylink-button-primary"
+      >
+        {loading
+          ? "Se procesează..."
+          : canWithdraw
+          ? "Cere retragerea"
+          : "Minim 50 RON pentru retragere"}
+      </Button>
     </div>
   );
 }

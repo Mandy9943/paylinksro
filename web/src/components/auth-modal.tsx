@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getRefCodeForAuth } from "@/lib/referral";
 import { CheckCircle2, Mail, X } from "lucide-react";
 import { useEffect, useState } from "react";
 interface AuthModalProps {
@@ -25,7 +26,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     e.preventDefault();
     setSubmitting(true);
     setErrorMsg(null);
-    requestMagicLink(email)
+    const refCode = getRefCodeForAuth();
+    requestMagicLink(email, undefined, refCode ?? undefined)
       .then(() => {
         // Show an in-modal success screen instead of a toast
         setSent(true);

@@ -18,8 +18,17 @@ export async function createShortLivedLoginToken(
     where: { email: normalizedEmail },
   });
   if (!user) {
+    // Assign affiliate code on first create
+    const code = await generateUniqueAffiliateCode();
     user = await prisma.user.create({
-      data: { email: normalizedEmail, active: true },
+      data: { email: normalizedEmail, active: true, affiliateCode: code },
+    });
+  } else if (!user.affiliateCode) {
+    // Backfill affiliate code if missing
+    const code = await generateUniqueAffiliateCode();
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { affiliateCode: code },
     });
   }
   const token = randomToken(32);
@@ -31,17 +40,53 @@ export async function createShortLivedLoginToken(
   return token;
 }
 
-export async function requestMagicLink(email: string, redirectTo?: string) {
+export async function requestMagicLink(
+  email: string,
+  redirectTo?: string,
+  refCode?: string
+) {
   const normalizedEmail = email.toLowerCase().trim();
 
   // Ensure user exists (create on first request)
   let user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
   });
+  let createdNew = false;
   if (!user) {
+    const code = await generateUniqueAffiliateCode();
     user = await prisma.user.create({
-      data: { email: normalizedEmail, active: false },
+      data: { email: normalizedEmail, active: false, affiliateCode: code },
     });
+    createdNew = true;
+  } else if (!user.affiliateCode) {
+    // Backfill affiliate code for existing users
+    const code = await generateUniqueAffiliateCode();
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { affiliateCode: code },
+    });
+  }
+
+  // Attempt referral attribution only on first user creation and valid refCode
+  if (createdNew && refCode && user) {
+    try {
+      const affiliate = await prisma.user.findFirst({
+        where: { affiliateCode: refCode },
+        select: { id: true },
+      });
+      if (affiliate && affiliate.id !== user.id) {
+        await prisma.referral.create({
+          data: {
+            affiliateUserId: affiliate.id,
+            referredUserId: user.id,
+            refCode,
+            attributedAt: new Date(),
+          },
+        });
+      }
+    } catch {
+      // ignore referral creation errors (e.g., unique constraint if retried)
+    }
   }
 
   // Generate token and store hash
@@ -91,6 +136,20 @@ export async function requestMagicLink(email: string, redirectTo?: string) {
   }
 
   return { ok: true };
+}
+
+// Generate a short unique affiliate code (hex), retried on rare collisions
+async function generateUniqueAffiliateCode(): Promise<string> {
+  for (let i = 0; i < 5; i++) {
+    const candidate = randomToken(6); // 12 hex chars
+    const existing = await prisma.user.findFirst({
+      where: { affiliateCode: candidate },
+      select: { id: true },
+    });
+    if (!existing) return candidate;
+  }
+  // Fallback to longer code if repeated collisions
+  return randomToken(12);
 }
 
 export async function verifyMagicLink(token: string) {

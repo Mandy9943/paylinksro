@@ -30,6 +30,14 @@ model User {
     active                  Boolean             @default(true)
     settings                UserSettings?
     monthlyFeeAccruals      MonthlyFeeAccrual[]
+
+    // Affiliates
+    affiliateCode        String?      @unique
+    referralsReferred    Referral[]   @relation("ReferralsReferred")
+    referralsAsAffiliate Referral[]   @relation("ReferralsAsAffiliate")
+    commissions          Commission[] @relation("CommissionsAffiliate")
+    commissionsFromRef   Commission[] @relation("CommissionsReferred")
+    payouts              Payout[]
 }
 
 model MagicLinkToken {
@@ -183,6 +191,9 @@ model Transaction {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    // Affiliate commission (if any)
+    commission Commission?
+
     @@index([userId, createdAt])
     @@index([userId, succeededAt])
     @@index([payLinkId, createdAt])
@@ -191,7 +202,6 @@ model Transaction {
 // ---------------------------
 // Platform monthly active fee accruals
 // ---------------------------
-
 model MonthlyFeeAccrual {
     id                String   @id @default(cuid())
     userId            String
@@ -279,3 +289,81 @@ model WebhookEvent {
     @@unique([provider, eventId])
     @@index([createdAt])
 }
+
+// ---------------------------
+// Affiliates
+// ---------------------------
+
+model Referral {
+    id              String   @id @default(cuid())
+    affiliateUserId String
+    affiliate       User     @relation("ReferralsAsAffiliate", fields: [affiliateUserId], references: [id])
+    referredUserId  String   @unique
+    referred        User     @relation("ReferralsReferred", fields: [referredUserId], references: [id])
+    refCode         String
+    attributedAt    DateTime @default(now())
+    createdAt       DateTime @default(now())
+
+    @@index([affiliateUserId, createdAt])
+}
+
+enum CommissionStatus {
+    PENDING
+    AVAILABLE
+    ALLOCATED
+    PAID
+    CANCELED
+}
+
+model Commission {
+    id              String           @id @default(cuid())
+    affiliateUserId String
+    affiliate       User             @relation("CommissionsAffiliate", fields: [affiliateUserId], references: [id])
+    referredUserId  String
+    referred        User             @relation("CommissionsReferred", fields: [referredUserId], references: [id])
+    transactionId   String           @unique
+    transaction     Transaction      @relation(fields: [transactionId], references: [id])
+    amount          Int // minor units RON
+    status          CommissionStatus @default(PENDING)
+    holdReleaseAt   DateTime
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    payoutItem      PayoutItem?
+
+    @@index([affiliateUserId, status, holdReleaseAt])
+    @@index([affiliateUserId, status, createdAt])
+}
+
+enum PayoutStatus {
+    REQUESTED
+    SENT
+    FAILED
+}
+
+model Payout {
+    id              String       @id @default(cuid())
+    affiliateUserId String
+    affiliate       User         @relation(fields: [affiliateUserId], references: [id])
+    amount          Int // total amount of this payout in minor units
+    status          PayoutStatus @default(REQUESTED)
+    requestedAt     DateTime     @default(now())
+    sentAt          DateTime?
+    failedAt        DateTime?
+    proofUrl        String?
+    bankDetails     String?
+    createdAt       DateTime     @default(now())
+    updatedAt       DateTime     @updatedAt
+    items           PayoutItem[]
+
+    @@index([status, requestedAt])
+}
+
+model PayoutItem {
+    id           String     @id @default(cuid())
+    payoutId     String
+    payout       Payout     @relation(fields: [payoutId], references: [id])
+    commissionId String     @unique
+    commission   Commission @relation(fields: [commissionId], references: [id])
+    amount       Int // amount from the commission allocated (should equal commission.amount in v1)
+}
+

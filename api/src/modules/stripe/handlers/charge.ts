@@ -1,3 +1,4 @@
+import { addDays } from "date-fns";
 import { env } from "../../../config/env.js";
 import {
   monthStartUTC,
@@ -49,22 +50,59 @@ export async function onChargeSucceeded(event: any) {
     const createdAt = pi?.created
       ? new Date((pi.created as number) * 1000)
       : succeededAt;
-    const netMinor =
-      typeof charge.transfer?.amount === "number"
-        ? (charge.transfer.amount as number)
-        : undefined;
+    // Compute net to seller locally: amount - (base app fee percent + fixed + monthly portion)
     const split = splitBaseApplicationFeeMinor(amountMinor);
+    const netMinor = Math.max(
+      0,
+      amountMinor - (split.percentMinor + split.fixedMinor + (metaMonthly || 0))
+    );
+    console.log("charge", charge);
     await prisma.transaction.updateMany({
       where: { stripeChargeId: charge.id as string },
       data: {
         createdAt,
         succeededAt,
-        netAmount: netMinor ?? undefined,
+        netAmount: netMinor,
         appFeePercent: split.percentMinor,
         appFeeFixed: split.fixedMinor,
         appFeeMonthly: metaMonthly || undefined,
       },
     });
+
+    // Create affiliate commission if seller was referred
+    try {
+      if (netMinor > 0) {
+        const tx = await prisma.transaction.findFirst({
+          where: { stripeChargeId: charge.id as string },
+          select: { id: true, userId: true },
+        });
+        if (tx) {
+          const ref = await prisma.referral.findUnique({
+            where: { referredUserId: tx.userId },
+            select: { affiliateUserId: true, referredUserId: true },
+          });
+          if (ref) {
+            const commissionAmount = Math.round(netMinor * 0.005);
+            const holdReleaseAt = addDays(succeededAt, 14);
+            // Create commission, unique on transactionId avoids dupes
+            await prisma.commission
+              .create({
+                data: {
+                  affiliateUserId: ref.affiliateUserId,
+                  referredUserId: ref.referredUserId,
+                  transactionId: tx.id,
+                  amount: commissionAmount,
+                  status: "PENDING",
+                  holdReleaseAt,
+                },
+              })
+              .catch(() => void 0);
+          }
+        }
+      }
+    } catch {
+      // ignore commission failures to not break webhook
+    }
     // Accrue the monthly active fee portion as collected for the current month
     if (metaMonthly > 0) {
       const now = new Date();
@@ -195,6 +233,24 @@ export async function onChargeRefunded(event: any) {
       refundedAt: new Date(),
     },
   });
+  // Cancel commission if exists (unless paid which we leave per spec)
+  try {
+    const tx = await prisma.transaction.findFirst({
+      where: { stripeChargeId: charge.id as string },
+      select: { id: true },
+    });
+    if (tx) {
+      await prisma.commission.updateMany({
+        where: {
+          transactionId: tx.id,
+          status: { in: ["PENDING", "AVAILABLE", "ALLOCATED"] } as any,
+        },
+        data: { status: "CANCELED" },
+      });
+    }
+  } catch {
+    // ignore
+  }
 }
 
 export async function onChargeDisputeCreated(event: any) {
@@ -210,4 +266,22 @@ export async function onChargeDisputeCreated(event: any) {
       stripeDisputeId: (dispute.id as string) || undefined,
     },
   });
+  // Cancel commission if exists (unless paid)
+  try {
+    const tx = await prisma.transaction.findFirst({
+      where: { stripeChargeId: dispute.charge as string },
+      select: { id: true },
+    });
+    if (tx) {
+      await prisma.commission.updateMany({
+        where: {
+          transactionId: tx.id,
+          status: { in: ["PENDING", "AVAILABLE", "ALLOCATED"] } as any,
+        },
+        data: { status: "CANCELED" },
+      });
+    }
+  } catch {
+    // ignore
+  }
 }

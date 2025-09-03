@@ -3,11 +3,12 @@ import { env } from "../../config/env.js";
 import { requestMagicLink, verifyMagicLink } from "./service.js";
 
 export async function requestLinkHandler(req: Request, res: Response) {
-  const { email, redirectTo } = (req as any).validated?.body as {
+  const { email, redirectTo, refCode } = (req as any).validated?.body as {
     email: string;
     redirectTo?: string;
+    refCode?: string;
   };
-  const result = await requestMagicLink(email, redirectTo);
+  const result = await requestMagicLink(email, redirectTo, refCode);
   res.json(result);
 }
 

@@ -3,6 +3,7 @@ import { z } from "zod";
 export const RequestMagicLinkSchema = z.object({
   email: z.string().email().toLowerCase().trim(),
   redirectTo: z.string().url(),
+  refCode: z.string().min(1).optional(),
 });
 
 export type RequestMagicLinkInput = z.infer<typeof RequestMagicLinkSchema>;

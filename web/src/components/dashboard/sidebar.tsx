@@ -11,6 +11,7 @@ import {
   Link,
   LogOut,
   Settings,
+  Shield,
   User,
   Users,
   X,
@@ -19,12 +20,12 @@ import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   activeSection: string;
-  user?: { id: string; email: string; companyName?: string | null };
+  user?: { id: string; email: string; role?: "USER" | "ADMIN"; companyName?: string | null };
   isOpen: boolean;
   onToggle: () => void;
 }
 
-const menuItems = [
+const baseMenuItems = [
   { id: "payment-links", label: "Link-uri de plată", icon: Link },
   { id: "transactions", label: "Tranzacții", icon: CreditCard },
   { id: "customers", label: "Clienți", icon: Users },
@@ -43,6 +44,13 @@ export default function Sidebar({
 }: SidebarProps) {
   const router = useRouter();
   const isMobile = useIsMobile();
+  const menuItems = (() => {
+    const items = [...baseMenuItems];
+    if (user?.role === "ADMIN") {
+      items.push({ id: "admin/payouts", label: "Admin", icon: Shield });
+    }
+    return items;
+  })();
 
   const handleLogout = async () => {
     try {

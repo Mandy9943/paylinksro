@@ -57,12 +57,17 @@ const Layout = ({ children }: { children: ReactNode }) => {
     affiliate: "Program de Afiliere",
     payouts: "Plăți",
     settings: "Setări",
+  "admin/payouts": "Admin — Payouts",
   };
 
   const activeSection = useMemo(() => {
     if (!pathname) return "payment-links";
-    const match = pathname.match(/\/dashboard(?:\/(\w+))?/);
-    const sub = match?.[1] ?? "payment-links";
+    const match = pathname.replace(/^\/?/, "").split("/");
+    // e.g., ["dashboard", "admin", "payouts"]
+    if (match[1] === "admin") {
+      return "admin/payouts";
+    }
+    const sub = match[1] ?? "payment-links";
     return sub as keyof typeof sectionTitles as string;
   }, [pathname]);
   // Prevent flashing private content: show nothing until auth is determined
