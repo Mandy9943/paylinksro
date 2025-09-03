@@ -241,48 +241,6 @@ export default async function PublicPayLinkPage({
           {/* Right - Payment form wrapper (Stripe Elements inside PayWidget remain unchanged) */}
           <div className="bg-white rounded-lg p-4 md:p-6 border shadow-sm">
             <div className="space-y-4 md:space-y-6">
-              {/* Secure hint and method label (UI only) */}
-              <div className="flex items-center gap-2 text-blue-600">
-                {/* Using an inline SVG to avoid server/client icon import churn here */}
-                <svg
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                  <line x1="1" y1="10" x2="23" y2="10"></line>
-                </svg>
-                <span className="text-sm font-medium">Card</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs md:text-sm text-green-600">
-                <svg
-                  className="w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <rect
-                    x="3"
-                    y="11"
-                    width="18"
-                    height="11"
-                    rx="2"
-                    ry="2"
-                  ></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-                <span>Finalizare sigură și rapidă</span>
-              </div>
-
               {!sellerOnboarded && (
                 <div className="rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-sm px-3 py-2">
                   Momentan acest comerciant nu poate accepta plăți. Revino mai
