@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Monitor, Smartphone } from "lucide-react";
+import { CreditCard, Lock, Monitor, Smartphone } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -233,6 +233,21 @@ export function PreviewPane() {
                         : "Introduceți suma"
                     }
                     className="mt-1"
+                    onChange={(e) => {
+                      const val = parseFloat(
+                        (e.target as HTMLInputElement).value
+                      );
+                      if (typeof window !== "undefined") {
+                        window.dispatchEvent(
+                          new CustomEvent("paylink:amount-change", {
+                            detail: {
+                              slug,
+                              amount: isNaN(val) ? undefined : val,
+                            },
+                          })
+                        );
+                      }
+                    }}
                   />
                 </div>
               )}
@@ -255,42 +270,80 @@ export function PreviewPane() {
                 </div>
               )}
 
+              {/* Cardholder name */}
               <div>
-                <Label className="text-xs text-gray-600">Metodă de plată</Label>
-                <div className="mt-1 p-3 border rounded-md bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Informații card</span>
-                    <div className="flex space-x-1">
-                      <div className="w-6 h-4 bg-blue-600 rounded" />
-                      <div className="w-6 h-4 bg-red-500 rounded" />
-                      <div className="w-6 h-4 bg-yellow-500 rounded" />
-                    </div>
-                  </div>
-                  <Input
-                    placeholder="1234 1234 1234 1234"
-                    className="mt-2 text-sm border-0 bg-transparent p-0"
-                  />
-                  <div className="flex space-x-2 mt-2">
-                    <Input
-                      placeholder="MM / YY"
-                      className="text-sm border-0 bg-transparent p-0 flex-1"
-                    />
-                    <Input
-                      placeholder="CVC"
-                      className="text-sm border-0 bg-transparent p-0 w-16"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-xs text-gray-600">
-                  Numele deținătorului cardului
-                </Label>
+                <Label className="text-xs text-gray-600">Nume pe card</Label>
                 <Input
                   placeholder="Numele complet de pe card"
                   className="mt-1"
                 />
+              </div>
+
+              <div>
+                <Label className="text-xs text-gray-600">Metodă de plată</Label>
+                <div className="mt-1 p-3 border rounded-md bg-white">
+                  {/* Header row */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-blue-600">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Card
+                    </div>
+                    <div className="flex items-center gap-2 text-green-700 text-sm">
+                      <Lock className="h-4 w-4" />
+                      <span className="text-blue-600">
+                        Finalizare sigură și rapidă a comenzii cu Link
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card number */}
+                  <div className="mt-2">
+                    <div className="relative">
+                      <Input
+                        placeholder="1234 1234 1234 1234"
+                        className="pr-20 text-sm"
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <div
+                          className="w-7 h-4 bg-[#1a1f71] rounded-sm"
+                          title="VISA"
+                        />
+                        <div
+                          className="w-7 h-4 bg-[#eb001b] rounded-sm"
+                          title="Mastercard"
+                        />
+                        <div
+                          className="w-7 h-4 bg-[#2e77bc] rounded-sm"
+                          title="AmEx"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expiry + CVC */}
+                  <div className="flex gap-2 mt-2">
+                    <Input placeholder="LL/AA" className="text-sm flex-1" />
+                    <div className="relative w-28">
+                      <Input placeholder="CVC" className="text-sm pr-10" />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-5 bg-gray-200 rounded-sm" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Country is always visible in real checkout */}
+              <div>
+                <Label className="text-xs text-gray-600">Țară</Label>
+                <Select>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="România" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ro">România</SelectItem>
+                    <SelectItem value="uy">Uruguay</SelectItem>
+                    <SelectItem value="us">Statele Unite</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {collectBillingAddress && (
@@ -298,38 +351,21 @@ export function PreviewPane() {
                   <Label className="text-xs text-gray-600">
                     Adresa de facturare
                   </Label>
-                  <Select>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="România" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ro">România</SelectItem>
-                      <SelectItem value="us">Statele Unite</SelectItem>
-                    </SelectContent>
-                  </Select>
                   <Input placeholder="Adresa linia 1" className="mt-2" />
                   <Input placeholder="Adresa linia 2" className="mt-2" />
                   <div className="flex space-x-2 mt-2">
                     <Input placeholder="Oraș" className="flex-1" />
-                    <Input placeholder="Cod poștal" className="w-20" />
+                    <Input placeholder="Cod poștal" className="w-28" />
                   </div>
                 </div>
               )}
 
               <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-6">
-                {type === "fundraising"
-                  ? "Donează acum"
-                  : priceType === "fixed"
-                  ? `Plătește ${
-                      addVat ? ((amount ?? 0) * 1.21).toFixed(2) : amount ?? 0
-                    } RON acum`
-                  : addVat
-                  ? "Plătește + 21% TVA acum"
-                  : "Plătește acum"}
+                Plătește acum
               </Button>
 
               <div className="text-xs text-center text-gray-500 mt-4">
-                Powered by PayLink • Termeni • Confidențialitate
+                Securizat prin PayLink • Termeni • Confidențialitate
               </div>
             </div>
           </div>
