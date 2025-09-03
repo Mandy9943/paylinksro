@@ -194,6 +194,7 @@ describe("PayLinks endpoints", () => {
         priceType: "FIXED",
         amount: 5,
         serviceType: "DIGITAL_PRODUCT",
+        collectEmail: true,
       })
       .expect(201);
     const second = await request(app)
@@ -205,6 +206,7 @@ describe("PayLinks endpoints", () => {
         priceType: "FIXED",
         amount: 5,
         serviceType: "DIGITAL_PRODUCT",
+        collectEmail: true,
       })
       .expect(201);
     expect(first.body.slug).toMatch(/^course(-\d+)?$/);
