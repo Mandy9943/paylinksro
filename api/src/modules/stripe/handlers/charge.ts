@@ -96,8 +96,9 @@ export async function onChargeSucceeded(event: any) {
       verifyUrl.searchParams.set("token", shortToken);
       verifyUrl.searchParams.set(
         "redirectTo",
-        new URL("/dashboard/purchases", env.APP_ORIGIN).toString()
+        new URL("/auth/callback", env.APP_ORIGIN).toString()
       );
+      verifyUrl.searchParams.set("redirectToAfterAuth", "/dashboard/purchases");
       purchasesDeepLink = verifyUrl.toString();
     } catch {
       purchasesDeepLink = null;

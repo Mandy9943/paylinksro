@@ -67,6 +67,7 @@ export async function requestMagicLink(email: string, redirectTo?: string) {
       const appOrigin = new URL(env.APP_ORIGIN);
       if (r.origin === appOrigin.origin) {
         verifyUrl.searchParams.set("redirectTo", r.toString());
+        verifyUrl.searchParams.set("redirectToAfterAuth", "/dashboard");
       }
     } catch {
       throw new Error("Invalid redirect URL");

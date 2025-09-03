@@ -1,4 +1,5 @@
 "use client";
+import PayLinkPreview from "@/app/p/[slug]/PayLinkPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Monitor, Smartphone } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { CreatePaymentLinkFormValues } from "./types";
@@ -45,12 +47,21 @@ export function PreviewPane() {
   });
   const currentRaised = 250; // demo
 
-  const totalDueLabel = () => {
-    if (type === "fundraising") return "Enter amount below";
-    if (priceType === "fixed") return `RON ${amount ?? 0}`;
-    if (minAmount && minAmount > 0) return `RON ${minAmount}+`;
-    return "La completarea formularului";
-  };
+  // Normalize values for the shared preview used on the public checkout page
+  const normalizedType = (type || "servicii") as
+    | "servicii"
+    | "produse-digitale"
+    | "donatii"
+    | "fundraising";
+  const normalizedPriceType = (priceType === "fixed" ? "FIXED" : "FLEXIBLE") as
+    | "FIXED"
+    | "FLEXIBLE";
+  const coverImageUrl =
+    (normalizedType === "fundraising"
+      ? fundraisingCoverImageUrl
+      : productCoverImageUrl) || "";
+  const mainBg = mainColor || "#fbbf24";
+  const slug = "demo-link";
 
   return (
     <div className="w-1/2 bg-gray-50 p-6 overflow-y-auto">
@@ -62,7 +73,10 @@ export function PreviewPane() {
               variant={previewMode === "desktop" ? "default" : "ghost"}
               size="sm"
               className="p-1"
-              onClick={() => setPreviewMode("desktop")}
+              onClick={(e) => {
+                e.preventDefault();
+                setPreviewMode("desktop");
+              }}
             >
               <Monitor className="h-4 w-4" />
             </Button>
@@ -70,7 +84,10 @@ export function PreviewPane() {
               variant={previewMode === "mobile" ? "default" : "ghost"}
               size="sm"
               className="p-1"
-              onClick={() => setPreviewMode("mobile")}
+              onClick={(e) => {
+                e.preventDefault();
+                setPreviewMode("mobile");
+              }}
             >
               <Smartphone className="h-4 w-4" />
             </Button>
@@ -88,64 +105,69 @@ export function PreviewPane() {
         }`}
       >
         <div className={`${previewMode === "desktop" ? "flex" : ""}`}>
+          {/* Left - mirrors checkout card */}
           <div
             className={`${previewMode === "desktop" ? "w-1/2" : ""} p-6 ${
               previewMode === "mobile" ? "rounded-t-lg" : "rounded-l-lg"
             }`}
-            style={{ backgroundColor: mainColor }}
+            style={{ backgroundColor: mainBg }}
           >
-            {(productCoverImageUrl ||
-              (type === "fundraising" && fundraisingCoverImageUrl)) && (
-              <div className="mb-4 rounded overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={
-                    (type === "fundraising"
-                      ? fundraisingCoverImageUrl
-                      : productCoverImageUrl) || ""
-                  }
-                  alt="Cover"
-                  className="w-full h-40 object-cover"
-                />
+            <div className="space-y-4 md:space-y-6">
+              {/* Header with avatar and title */}
+              <div className="flex items-start gap-4 md:gap-5">
+                <div className="relative w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
+                  <div className="w-full h-full rounded-full overflow-hidden border-4 border-white shadow-xl shadow-black/20 ring-2 ring-white/50 bg-gradient-to-br from-white to-gray-100">
+                    {coverImageUrl ? (
+                      <Image
+                        src={coverImageUrl}
+                        alt="Cover"
+                        fill
+                        className="object-cover rounded-full"
+                        sizes="80px"
+                        priority
+                      />
+                    ) : (
+                      <div className="w-full h-full" />
+                    )}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br from-green-400 to-green-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+                    <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-white rounded-full" />
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1 pt-1">
+                  <h1 className="text-xl md:text-2xl font-bold text-black leading-tight tracking-tight truncate">
+                    {name || "Titlu produs/serviciu"}
+                  </h1>
+                </div>
               </div>
-            )}
-            <div className="flex items-center mb-4">
-              <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mr-3">
-                <span className="text-white text-xs">✓</span>
-              </div>
-              <span className="text-sm font-medium">
-                {name ||
-                  (type === "servicii"
-                    ? "Serviciul tău"
-                    : type === "produse-digitale"
-                    ? "Produsul tău digital"
-                    : type === "donatii"
-                    ? "Donația ta"
-                    : "Your Fundraising Campaign")}
-              </span>
-            </div>
 
-            <div className="text-center">
-              <div className="text-sm text-gray-700 mb-2">
-                {type === "servicii"
-                  ? `Plătește ${name || "Serviciul"}`
-                  : type === "produse-digitale"
-                  ? `Cumpără ${name || "Produsul Digital"}`
-                  : type === "donatii"
-                  ? `Donează pentru ${name || "Cauza"}`
-                  : `Support ${name || "Our Campaign"}`}
-              </div>
-              {description && (
-                <div className="text-xs text-gray-600 mb-4 px-2">
-                  {description}
+              {/* Description */}
+              {(description || name) && (
+                <div className="flex items-start gap-3 md:gap-4">
+                  <div className="w-6 h-6 md:w-7 md:h-7 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-lg shadow-green-500/25 ring-2 ring-green-300/30">
+                    <span className="text-white text-xs md:text-sm">✓</span>
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <h3 className="font-bold text-black text-base md:text-lg leading-tight truncate">
+                      {normalizedType === "servicii"
+                        ? "Sesiune de consultanță online"
+                        : name || "Produs"}
+                    </h3>
+                    {description && (
+                      <p className="text-sm md:text-base text-black/90 leading-relaxed">
+                        {description}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {type === "fundraising" && (
-                <div className="mb-4 px-2">
+              {/* Fundraising progress (if applicable) */}
+              {normalizedType === "fundraising" && (
+                <div className="mb-2">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs text-gray-600">Raised</span>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-gray-800/80">Progres</span>
+                    <span className="text-xs text-gray-800/80">
                       {Math.min(
                         100,
                         (currentRaised / (targetAmount || 1)) * 100
@@ -153,7 +175,7 @@ export function PreviewPane() {
                       %
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div className="w-full bg-black/10 rounded-full h-2 mb-2">
                     <div
                       className="bg-green-600 h-2 rounded-full transition-all duration-300"
                       style={{
@@ -164,87 +186,37 @@ export function PreviewPane() {
                       }}
                     />
                   </div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-600">
-                      {currentRaised} RON raised
-                    </span>
-                    <span className="text-gray-600">of {targetAmount} RON</span>
+                  <div className="flex justify-between items-center text-xs text-gray-800/90">
+                    <span>{currentRaised} RON strânși</span>
+                    <span>din {targetAmount} RON</span>
                   </div>
                 </div>
               )}
-              <div className="text-2xl font-bold text-gray-900 mb-6">
-                {type === "fundraising"
-                  ? "Any amount"
-                  : priceType === "flexible"
-                  ? minAmount && minAmount > 0
-                    ? `RON ${minAmount}+`
-                    : "Sumă la alegere"
-                  : `RON ${amount ?? 0}`}
-              </div>
 
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>
-                    {name ||
-                      (type === "fundraising"
-                        ? "Campaign support"
-                        : "Nume produs")}
-                  </span>
-                  <span>
-                    {type === "fundraising"
-                      ? "Any amount"
-                      : priceType === "flexible"
-                      ? minAmount && minAmount > 0
-                        ? `RON ${minAmount}+`
-                        : "Sumă la alegere"
-                      : `RON ${amount ?? 0}`}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>
-                    {type === "fundraising"
-                      ? "Enter amount below"
-                      : priceType === "flexible"
-                      ? minAmount && minAmount > 0
-                        ? `RON ${minAmount}+`
-                        : "Sumă la alegere"
-                      : `RON ${amount ?? 0}`}
-                  </span>
-                </div>
-                {type === "fundraising" ? (
-                  <div className="flex justify-between font-semibold border-t pt-2">
-                    <span>Total due</span>
-                    <span>Enter amount below</span>
+              {/* Summary / Preview (same shared component as checkout) */}
+              <div className="bg-black/10 rounded-lg p-3 md:p-4 space-y-3">
+                <div className="text-center mb-3 md:mb-4">
+                  <div className="text-2xl md:text-3xl font-bold text-black">
+                    {normalizedPriceType === "FIXED" &&
+                    typeof amount === "number"
+                      ? `RON ${(amount ?? 0).toFixed(2)}`
+                      : ""}
                   </div>
-                ) : priceType === "fixed" ? (
-                  <>
-                    {addVat && (
-                      <div className="flex justify-between">
-                        <span>TVA</span>
-                        <span>21%</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-semibold border-t pt-2">
-                      <span>Total due</span>
-                      <span>
-                        RON{" "}
-                        {addVat
-                          ? ((amount ?? 0) * 1.21).toFixed(2)
-                          : amount ?? 0}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex justify-between font-semibold border-t pt-2">
-                    <span>Total due</span>
-                    <span>{totalDueLabel()}</span>
-                  </div>
-                )}
+                </div>
+                <PayLinkPreview
+                  slug={slug}
+                  type={normalizedType}
+                  priceType={normalizedPriceType}
+                  amount={amount ?? 0}
+                  minAmount={minAmount ?? null}
+                  name={name || "Produs"}
+                  addVat={!!addVat}
+                />
               </div>
             </div>
           </div>
 
+          {/* Right - form preview (simplified Elements placeholder) */}
           <div className={`${previewMode === "desktop" ? "w-1/2" : ""} p-6`}>
             <div className="space-y-4">
               {priceType === "flexible" && (

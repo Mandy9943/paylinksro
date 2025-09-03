@@ -12,9 +12,11 @@ export async function requestLinkHandler(req: Request, res: Response) {
 }
 
 export async function verifyLinkHandler(req: Request, res: Response) {
-  const { token, redirectTo } = (req as any).validated?.query as {
+  const { token, redirectTo, redirectToAfterAuth } = (req as any).validated
+    ?.query as {
     token: string;
     redirectTo?: string;
+    redirectToAfterAuth?: string;
   };
   const result = await verifyMagicLink(token);
 
@@ -26,6 +28,10 @@ export async function verifyLinkHandler(req: Request, res: Response) {
       if (url.origin === appOrigin.origin) {
         // Attach token in URL fragment to avoid sending it to servers via Referer
         url.hash = `token=${encodeURIComponent(result.token)}`;
+
+        if (redirectToAfterAuth) {
+          url.searchParams.set("redirectTo", redirectToAfterAuth);
+        }
         return res.redirect(302, url.toString());
       } else {
         return res.status(400).json({ error: "Invalid redirect URL" });

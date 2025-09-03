@@ -10,6 +10,7 @@ export type RequestMagicLinkInput = z.infer<typeof RequestMagicLinkSchema>;
 export const VerifyMagicLinkSchema = z.object({
   token: z.string().min(32),
   redirectTo: z.string().url().optional(),
+  redirectToAfterAuth: z.string().optional(),
 });
 
 export type VerifyMagicLinkInput = z.infer<typeof VerifyMagicLinkSchema>;
