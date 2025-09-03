@@ -30,7 +30,6 @@ export default function PurchasesPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Achizițiile mele</h1>
       <div className="space-y-4">
         {items.map((it) => (
           <div key={it.id} className="rounded border p-4">
