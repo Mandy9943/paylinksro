@@ -149,13 +149,15 @@ export async function onChargeSucceeded(event: any) {
       link.currency || "RON"
     ).toUpperCase()}`;
     const subject = `Plată procesată — ${link.name}`;
+    const achizitii = purchasesDeepLink
+      ? `<a href="${purchasesDeepLink}"><strong>Achizițiile mele</strong></a>`
+      : `<strong>Achizițiile mele</strong>`;
     const extraForType =
       link.serviceType === "DIGITAL_PRODUCT"
-        ? `<p>Poți descărca fișierele din <strong>Achizițiile mele</strong>.</p>`
-        : `<p>Găsești detaliile achiziției în <strong>Achizițiile mele</strong>.</p>`;
+        ? `<p>Poți descărca fișierele din ${achizitii}.</p>`
+        : `<p>Găsești detaliile achiziției în ${achizitii}.</p>`;
     const deepLinkHtml = purchasesDeepLink
-      ? `<p><a href="${purchasesDeepLink}">Deschide Achizițiile mele</a></p>
-         <p style="color:#64748b; font-size: 12px;">Linkul de autentificare expiră în 24 de ore.</p>`
+      ? `<p style="color:#64748b; font-size: 12px;">Linkul de autentificare expiră în 24 de ore.</p>`
       : "";
     const html = `
       <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
