@@ -57,7 +57,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
     affiliate: "Program de Afiliere",
     payouts: "Plăți",
     settings: "Setări",
-  "admin/payouts": "Admin — Payouts",
+    "admin/payouts": "Admin — Payouts",
   };
 
   const activeSection = useMemo(() => {

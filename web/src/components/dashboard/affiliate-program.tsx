@@ -1,4 +1,5 @@
 "use client";
+import { requestPayoutAllWithDetails } from "@/api/affiliates";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAffiliateSummary } from "@/hooks/use-affiliates";
-import { requestPayoutAllWithDetails } from "@/api/affiliates";
 import {
   Copy,
   DollarSign,
@@ -27,9 +27,8 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useState } from "react";
 
 function formatRON(minor: number | undefined | null) {
   const v = (minor ?? 0) / 100;

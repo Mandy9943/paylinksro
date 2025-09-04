@@ -20,7 +20,12 @@ import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   activeSection: string;
-  user?: { id: string; email: string; role?: "USER" | "ADMIN"; companyName?: string | null };
+  user?: {
+    id: string;
+    email: string;
+    role?: "USER" | "ADMIN";
+    companyName?: string | null;
+  };
   isOpen: boolean;
   onToggle: () => void;
 }

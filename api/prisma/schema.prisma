@@ -366,4 +366,3 @@ model PayoutItem {
     commission   Commission @relation(fields: [commissionId], references: [id])
     amount       Int // amount from the commission allocated (should equal commission.amount in v1)
 }
-

@@ -108,7 +108,10 @@ export async function listMyReferrals(
   });
 }
 
-export async function requestPayoutAllAvailable(userId: string, bankDetails?: string) {
+export async function requestPayoutAllAvailable(
+  userId: string,
+  bankDetails?: string
+) {
   // Sum available
   const availableAgg = await prisma.commission.aggregate({
     _sum: { amount: true },
@@ -171,8 +174,8 @@ export async function adminListPayouts(
       requestedAt: true,
       sentAt: true,
       affiliateUserId: true,
-  bankDetails: true,
-  proofUrl: true,
+      bankDetails: true,
+      proofUrl: true,
     },
   });
 }

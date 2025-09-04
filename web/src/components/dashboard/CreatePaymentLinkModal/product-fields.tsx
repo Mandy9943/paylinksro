@@ -467,7 +467,10 @@ export function ProductFields() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleUploadCover("paylink-image")}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleUploadCover("paylink-image");
+                }}
               >
                 <ImageIcon className="h-4 w-4 mr-2" />
                 Upload Image
@@ -497,7 +500,10 @@ export function ProductFields() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleUploadCover("paylink-image")}
+              onClick={(e) => {
+                e.preventDefault();
+                handleUploadCover("paylink-image");
+              }}
             >
               <ImageIcon className="h-4 w-4 mr-2" />
               Upload Image
