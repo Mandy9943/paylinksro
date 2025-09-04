@@ -11,6 +11,8 @@ export const serviceTypeEnum = z.enum([
 
 const createPayLinkBase = z.object({
   name: z.string().min(1),
+  displayName: z.string().max(200).optional(),
+  subtitle: z.string().max(300).optional(),
   slug: z
     .string()
     .min(1)

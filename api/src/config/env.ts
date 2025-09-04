@@ -26,6 +26,9 @@ const EnvSchema = z.object({
   CLOUDFLARE_ACCOUNT_ID: z.string(),
   // Optional public base URL for R2 assets (e.g., https://pub-<account>.r2.dev)
   R2_PUBLIC_BASE_URL: z.string().url(),
+
+  // Google Generative AI
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
 });
 
 export type AppEnv = z.infer<typeof EnvSchema>;

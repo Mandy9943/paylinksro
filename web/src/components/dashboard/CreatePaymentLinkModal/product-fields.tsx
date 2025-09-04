@@ -144,6 +144,26 @@ export function ProductFields() {
             )}
           />
           <Controller
+            name="displayName"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label
+                  htmlFor="display-name"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Nume (opțional)
+                </Label>
+                <Input
+                  id="display-name"
+                  placeholder="Numele afișat (ex. Andrei Bucur)"
+                  className="w-full mt-1"
+                  {...field}
+                />
+              </div>
+            )}
+          />
+          <Controller
             name="description"
             control={control}
             render={({ field }) => (
@@ -217,6 +237,26 @@ export function ProductFields() {
             )}
           />
 
+          <Controller
+            name="displayName"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label
+                  htmlFor="product-display-name"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Nume (opțional)
+                </Label>
+                <Input
+                  id="product-display-name"
+                  placeholder="Numele afișat (ex. Andrei Bucur)"
+                  className="w-full mt-1"
+                  {...field}
+                />
+              </div>
+            )}
+          />
           <Controller
             name="description"
             control={control}
@@ -358,6 +398,26 @@ export function ProductFields() {
             )}
           />
           <Controller
+            name="displayName"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label
+                  htmlFor="donation-display-name"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Nume (opțional)
+                </Label>
+                <Input
+                  id="donation-display-name"
+                  placeholder="Numele afișat (ex. Andrei Bucur)"
+                  className="w-full mt-1"
+                  {...field}
+                />
+              </div>
+            )}
+          />
+          <Controller
             name="description"
             control={control}
             render={({ field }) => (
@@ -406,6 +466,26 @@ export function ProductFields() {
                     {fieldState.error.message}
                   </p>
                 )}
+              </div>
+            )}
+          />
+          <Controller
+            name="displayName"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label
+                  htmlFor="campaign-display-name"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Nume (opțional)
+                </Label>
+                <Input
+                  id="campaign-display-name"
+                  placeholder="Numele afișat (ex. Andrei Bucur)"
+                  className="w-full mt-1"
+                  {...field}
+                />
               </div>
             )}
           />

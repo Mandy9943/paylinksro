@@ -24,6 +24,7 @@ export function PreviewPane() {
 
   const type = useWatch({ control, name: "type" });
   const name = useWatch({ control, name: "name" });
+  const displayName = useWatch({ control, name: "displayName" });
   const description = useWatch({ control, name: "description" });
   const priceType = useWatch({ control, name: "priceType" });
   const amount = useWatch({ control, name: "amount" });
@@ -138,6 +139,11 @@ export function PreviewPane() {
                   <h1 className="text-xl md:text-2xl font-bold text-black leading-tight tracking-tight truncate">
                     {name || "Titlu produs/serviciu"}
                   </h1>
+                  {displayName && (
+                    <div className="text-black/90 mt-1 text-sm font-semibold truncate">
+                      {displayName}
+                    </div>
+                  )}
                 </div>
               </div>
 

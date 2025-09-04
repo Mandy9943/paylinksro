@@ -27,6 +27,7 @@ export default function CreatePaymentLinkModal({
   const defaultValues: CreatePaymentLinkFormValues = {
     type: "servicii",
     name: "",
+  displayName: "",
     description: "",
     priceType: "fixed",
     amount: 0,
@@ -69,9 +70,11 @@ export default function CreatePaymentLinkModal({
 
     const priceTypeMap = { fixed: "FIXED", flexible: "FLEXIBLE" } as const;
 
-    const slugBase = values.name || "link";
+    const slugBase = values.name || values.displayName || "link";
+    const computedName = values.name || values.displayName || "link";
     const payload: CreateInput = {
-      name: values.name,
+      name: computedName,
+      displayName: values.displayName || undefined,
       slug: slugify(slugBase),
       priceType: priceTypeMap[values.priceType],
       amount: values.priceType === "fixed" ? values.amount ?? 0 : undefined,
@@ -88,15 +91,15 @@ export default function CreatePaymentLinkModal({
       mainColor: values.mainColor,
     };
 
-    if (values.type === "servicii") {
+  if (values.type === "servicii") {
       payload.service = {
-        title: values.name,
+    title: values.name || values.displayName || "",
         description: values.description || undefined,
         coverImageUrl: values.productCoverImageUrl || undefined,
       };
     } else if (values.type === "produse-digitale") {
       payload.product = {
-        name: values.name,
+    name: values.name || values.displayName || "",
         description: values.description || undefined,
         assets: values.productAssetUrls?.length
           ? values.productAssetUrls

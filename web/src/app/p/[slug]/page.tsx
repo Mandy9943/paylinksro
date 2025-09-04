@@ -9,6 +9,8 @@ export const runtime = "edge";
 type PayLink = {
   id: string;
   name: string;
+  displayName?: string | null;
+  subtitle?: string | null;
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
   amount?: number | null;
@@ -115,6 +117,8 @@ export default async function PublicPayLinkPage({
   const minAmount = data.minAmount ?? null;
   const description = data.description ?? "";
   const name = data.name ?? "";
+  const displayName = data.displayName ?? "";
+  const subtitle = data.subtitle ?? "";
   const collectEmail = !!data.collectEmail;
   const collectPhone = !!data.collectPhone;
   const collectBillingAddress = !!data.collectBillingAddress;
@@ -161,6 +165,20 @@ export default async function PublicPayLinkPage({
                   <h1 className="text-xl md:text-2xl font-bold text-black leading-tight tracking-tight truncate">
                     {name}
                   </h1>
+                  {(displayName || subtitle) && (
+                    <div className="flex items-center gap-2 text-black/90 mt-1">
+                      {displayName && (
+                        <span className="font-semibold truncate max-w-[70%]">
+                          {displayName}
+                        </span>
+                      )}
+                      {subtitle && (
+                        <span className="text-xs md:text-sm truncate opacity-90">
+                          {subtitle}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -34,6 +34,8 @@ export async function listCtrl(req: any, res: Response, next: NextFunction) {
     res.json({
       items: items.map((p: any) => ({
         ...p,
+  displayName: (p as any).displayName ?? null,
+  subtitle: (p as any).subtitle ?? null,
         amount: toRON(p.amount),
         minAmount: toRON((p as any).minAmount),
         addVat: (p as any).addVat,
@@ -228,6 +230,8 @@ export async function publicGetBySlugCtrl(
 
     const data = {
       ...p,
+  displayName: (p as any).displayName ?? null,
+  subtitle: (p as any).subtitle ?? null,
       amount: toRON(p.amount),
       minAmount: toRON((p as any).minAmount),
       addVat: (p as any).addVat,

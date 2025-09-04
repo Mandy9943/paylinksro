@@ -3,6 +3,8 @@ import { api } from "@/lib/api";
 export type PayLink = {
   id: string;
   name: string;
+  displayName?: string | null;
+  subtitle?: string | null;
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
   amount?: number | null; // RON
@@ -41,6 +43,7 @@ export type PayLink = {
 
 export type UpdatePayLinkInput = Partial<{
   name: string;
+  displayName?: string;
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
   amount?: number; // RON
@@ -70,6 +73,8 @@ export async function listPayLinks() {
 
 export async function createPayLink(input: {
   name: string;
+  displayName?: string;
+  subtitle?: string;
   slug: string;
   priceType: "FIXED" | "FLEXIBLE";
   amount?: number; // RON

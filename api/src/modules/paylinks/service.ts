@@ -1,6 +1,7 @@
 import { FEES } from "../../config/fees.js";
 import { prisma } from "../../lib/prisma.js";
 import type { CreatePayLinkInput, UpdatePayLinkInput } from "./schemas.js";
+import { generateSimpleAiText } from "../../services/ai.js";
 
 // Generate a human-friendly unique slug by appending a numeric suffix when needed
 async function ensureUniqueSlug(baseSlug: string) {
@@ -30,6 +31,8 @@ export async function listPayLinks(
     select: {
       id: true,
       name: true,
+      displayName: true,
+      subtitle: true,
       slug: true,
       priceType: true,
       amount: true,
@@ -97,9 +100,29 @@ export async function createPayLink(userId: string, data: CreatePayLinkInput) {
       throw e;
     }
   }
+  // Create a short subtitle using AI if there's a description
+  let generatedSubtitle: string | null = (data as any).subtitle ?? null;
+  try {
+    const desc =
+      data.description ||
+      data.service?.description ||
+      data.product?.description ||
+      "";
+    if (!generatedSubtitle && desc) {
+      const prompt = `Scrie un subtitlu foarte scurt (max 8 cuvinte), clar și convingător pentru următoarea descriere a unui serviciu sau produs. Ton prietenos, fără emoji, fără ghilimele.\nDescriere: ${desc}`;
+      const out = await generateSimpleAiText(prompt);
+      generatedSubtitle = (out || "")
+        .replace(/^\s*["'“”]/, "")
+        .replace(/["'“”]\s*$/, "")
+        .trim()
+        .slice(0, 120);
+    }
+  } catch {}
   const toCreate = {
     userId,
     name: data.name,
+    displayName: (data as any).displayName ?? null,
+    subtitle: generatedSubtitle,
     slug: uniqueSlug,
     priceType: data.priceType,
     amount: data.priceType === "FIXED" ? data.amount ?? 0 : null,
@@ -304,6 +327,8 @@ export async function findPublicPayLinkBySlug(slug: string) {
       userId: true,
       id: true,
       name: true,
+  displayName: true,
+  subtitle: true,
       slug: true,
       priceType: true,
       amount: true,
@@ -367,6 +392,8 @@ export async function duplicatePayLink(userId: string, id: string) {
     data: {
       userId,
       name: newName,
+  displayName: (existing as any).displayName ?? null,
+  subtitle: (existing as any).subtitle ?? null,
       slug: newSlug,
       priceType: existing.priceType,
       amount: existing.amount,

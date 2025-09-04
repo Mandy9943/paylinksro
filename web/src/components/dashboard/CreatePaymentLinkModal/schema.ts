@@ -12,7 +12,9 @@ export const priceTypeEnum = z.enum(["fixed", "flexible"]);
 export const createPaymentLinkSchema = z
   .object({
     type: paymentLinkTypeEnum,
-    name: z.string().min(1, "Numele este obligatoriu"),
+  // Backend will allow missing name; UI may use displayName if provided
+  name: z.string().optional().or(z.literal("")),
+  displayName: z.string().optional().or(z.literal("")),
     description: z.string().optional().or(z.literal("")),
     priceType: priceTypeEnum,
     amount: z.number().nullable().optional(),
@@ -29,6 +31,14 @@ export const createPaymentLinkSchema = z
     targetAmount: z.number().nullable().optional(),
   })
   .superRefine((val, ctx) => {
+    // At least one of name or displayName should be provided to avoid empty preview
+    if (!val.name && !val.displayName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["name"],
+        message: "Completează un Titlu sau Nume (opțional)",
+      });
+    }
     // Digital products must collect email
     if (val.type === "produse-digitale" && val.collectEmail !== true) {
       ctx.addIssue({

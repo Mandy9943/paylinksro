@@ -71,6 +71,10 @@ model PayLink {
     user                  User        @relation(fields: [userId], references: [id])
     name                  String
     slug                  String      @unique
+    // Optional display name to show under the title on the checkout page
+    displayName           String?
+    // Short AI‑generated subtitle/tagline derived from the description
+    subtitle              String?
     priceType             PriceType
     amount                Int? // in minor units (bani) when priceType == FIXED
     minAmount             Int? // in minor units (bani) when priceType == FLEXIBLE

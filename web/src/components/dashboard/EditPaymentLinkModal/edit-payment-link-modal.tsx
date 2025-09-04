@@ -37,7 +37,8 @@ export default function EditPaymentLinkModal({
         : l?.serviceType === "DONATION"
         ? "donatii"
         : "fundraising",
-    name: l?.name || "",
+  name: l?.name || "",
+  displayName: l?.displayName || "",
     description: l?.description || "",
     priceType: l?.priceType === "FIXED" ? "fixed" : "flexible",
     amount: l?.amount ?? 0,
@@ -60,6 +61,7 @@ export default function EditPaymentLinkModal({
       : {
           type: "servicii",
           name: "",
+          displayName: "",
           description: "",
           priceType: "fixed",
           amount: 0,
@@ -111,6 +113,7 @@ export default function EditPaymentLinkModal({
 
     const payload: UpdatePayLinkInput = {
       name: values.name,
+      displayName: values.displayName || undefined,
       // slug stays unless we later add an explicit field
       priceType: priceTypeMap[values.priceType],
       amount: values.priceType === "fixed" ? values.amount ?? 0 : undefined,
@@ -129,13 +132,13 @@ export default function EditPaymentLinkModal({
 
     if (values.type === "servicii") {
       payload.service = {
-        title: values.name,
+        title: values.name || values.displayName || "",
         description: values.description || undefined,
         coverImageUrl: values.productCoverImageUrl || undefined,
       };
     } else if (values.type === "produse-digitale") {
       payload.product = {
-        name: values.name,
+        name: values.name || values.displayName || "",
         description: values.description || undefined,
         assets: values.productAssetUrls?.length
           ? values.productAssetUrls
