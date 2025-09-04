@@ -144,7 +144,6 @@ export async function getConnectedBalanceSummary(accountId: string) {
   const balance = await stripe.balance.retrieve({
     stripeAccount: accountId,
   } as any);
-  console.log("getConnectedBalanceSummary balance", balance);
 
   const ronAvail = (balance.available || []).find(
     (b: any) => (b.currency || "").toLowerCase() === "ron"
@@ -199,13 +198,18 @@ export async function listPayoutsConnected(
       created: p.created ? new Date(p.created * 1000) : null,
       arrivalDate: p.arrival_date ? new Date(p.arrival_date * 1000) : null,
       method: (p.method as string | undefined) || null,
-      statementDescriptor: (p.statement_descriptor as string | undefined) || null,
+      statementDescriptor:
+        (p.statement_descriptor as string | undefined) || null,
     }));
 }
 
 export async function createPayoutOnConnected(
   accountId: string,
-  params: { amountMinor: number; currency?: string; statementDescriptor?: string }
+  params: {
+    amountMinor: number;
+    currency?: string;
+    statementDescriptor?: string;
+  }
 ) {
   const stripe = getStripe();
   const currency = (params.currency || "ron").toLowerCase();

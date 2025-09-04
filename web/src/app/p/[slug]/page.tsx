@@ -165,16 +165,11 @@ export default async function PublicPayLinkPage({
                   <h1 className="text-xl md:text-2xl font-bold text-black leading-tight tracking-tight truncate">
                     {name}
                   </h1>
-                  {(displayName || subtitle) && (
+                  {displayName && (
                     <div className="flex items-center gap-2 text-black/90 mt-1">
                       {displayName && (
                         <span className="font-semibold truncate max-w-[70%]">
                           {displayName}
-                        </span>
-                      )}
-                      {subtitle && (
-                        <span className="text-xs md:text-sm truncate opacity-90">
-                          {subtitle}
                         </span>
                       )}
                     </div>
@@ -189,10 +184,8 @@ export default async function PublicPayLinkPage({
                     <span className="text-white text-xs md:text-sm">✓</span>
                   </div>
                   <div className="min-w-0 flex-1 space-y-2">
-                    <h3 className="font-bold text-black text-base md:text-lg leading-tight truncate">
-                      {type === "servicii"
-                        ? "Sesiune de consultanță online"
-                        : name}
+                    <h3 className="font-bold text-black text-base leading-tight truncate">
+                      {subtitle}
                     </h3>
                     {description && (
                       <p className="text-sm md:text-base text-black/90 leading-relaxed">
