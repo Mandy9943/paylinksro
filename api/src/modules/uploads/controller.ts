@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { presignGetUrl } from "../../lib/r2.js";
 import { getDownloadSchema } from "./schemas.js";
-import { getPresignedUpload } from "./service.js";
+import { getPresignedUpload, listUserLogos } from "./service.js";
 
 export async function presignUploadController(
   req: Request,
@@ -49,6 +49,21 @@ export async function downloadUrlController(req: any, res: any, next: any) {
       expiresInSeconds: expiresIn ?? 300,
     });
     res.json({ downloadUrl: url });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listLogosController(
+  req: any,
+  res: any,
+  next: any
+) {
+  try {
+    const userId = req.user?.id as string;
+    const limit = Number(req.query.limit ?? 50);
+    const items = await listUserLogos(userId, isNaN(limit) ? 50 : limit);
+    res.json({ items });
   } catch (err) {
     next(err);
   }

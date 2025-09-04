@@ -40,3 +40,17 @@ export async function getDownloadUrl(key: string, expiresIn = 300) {
   );
   return data.downloadUrl;
 }
+
+export type UploadedLogo = {
+  key: string;
+  url: string;
+  size: number | null;
+  lastModified: string | null;
+};
+
+export async function listPreviousLogos(limit = 50) {
+  const { data } = await api.get<{ items: UploadedLogo[] }>(
+    `/v1/uploads/logos?limit=${encodeURIComponent(String(limit))}`
+  );
+  return data.items;
+}

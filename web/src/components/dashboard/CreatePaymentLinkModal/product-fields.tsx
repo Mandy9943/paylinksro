@@ -1,5 +1,5 @@
 "use client";
-import { uploadFileDirect } from "@/api/uploads";
+import { listPreviousLogos, uploadFileDirect } from "@/api/uploads";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileText, Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
+import useSWR from "swr";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import type { CreatePaymentLinkFormValues } from "./types";
 
@@ -23,6 +24,10 @@ export function ProductFields() {
     control,
     name: "fundraisingCoverImageUrl",
   });
+  const { data: previousLogos } = useSWR(
+    "/v1/uploads/logos",
+    () => listPreviousLogos(50)
+  );
 
   // Dropzone state/refs for multi-file uploads
   const [dragActive, setDragActive] = useState(false);
@@ -111,6 +116,11 @@ export function ProductFields() {
     const { publicUrl } = await uploadFileDirect(kind, file);
     if (type === "fundraising") setValue("fundraisingCoverImageUrl", publicUrl);
     else setValue("productCoverImageUrl", publicUrl);
+  };
+
+  const applyLogo = (url: string) => {
+    if (type === "fundraising") setValue("fundraisingCoverImageUrl", url);
+    else setValue("productCoverImageUrl", url);
   };
 
   return (
@@ -204,6 +214,29 @@ export function ProductFields() {
                 PNG, JPG până la 5MB
               </span>
             </div>
+            {previousLogos && previousLogos.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs text-gray-600 mb-2">Alege din logo-urile încărcate anterior</p>
+                <div className="grid grid-cols-5 gap-2">
+                  {previousLogos.slice(0, 15).map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className="border rounded overflow-hidden hover:ring-2 hover:ring-blue-400 focus:outline-none"
+                      onClick={() => applyLogo(item.url)}
+                      title={item.key}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.url}
+                        alt="logo"
+                        className="w-full h-12 object-contain bg-white"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -568,6 +601,29 @@ export function ProductFields() {
                 />
               </div>
             )}
+            {previousLogos && previousLogos.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs text-gray-600 mb-2">Pick from previously uploaded images</p>
+                <div className="grid grid-cols-5 gap-2">
+                  {previousLogos.slice(0, 15).map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className="border rounded overflow-hidden hover:ring-2 hover:ring-blue-400 focus:outline-none"
+                      onClick={() => applyLogo(item.url)}
+                      title={item.key}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.url}
+                        alt="logo"
+                        className="w-full h-12 object-contain bg-white"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -598,6 +654,29 @@ export function ProductFields() {
               />
             )}
           </div>
+          {previousLogos && previousLogos.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs text-gray-600 mb-2">Pick from previously uploaded images</p>
+              <div className="grid grid-cols-5 gap-2">
+                {previousLogos.slice(0, 15).map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="border rounded overflow-hidden hover:ring-2 hover:ring-blue-400 focus:outline-none"
+                    onClick={() => applyLogo(item.url)}
+                    title={item.key}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.url}
+                      alt="logo"
+                      className="w-full h-12 object-contain bg-white"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

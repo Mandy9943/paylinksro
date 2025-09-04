@@ -4,6 +4,7 @@ import { validate } from "../../middleware/validate.js";
 import {
   downloadUrlController,
   presignUploadController,
+  listLogosController,
 } from "./controller.js";
 import { getDownloadSchema, getPresignSchema } from "./schemas.js";
 
@@ -21,3 +22,5 @@ uploadsRouter.post(
   validate(getDownloadSchema),
   downloadUrlController
 );
+
+uploadsRouter.get("/logos", requireAuth, listLogosController);
