@@ -1,7 +1,7 @@
 import { FEES } from "../../config/fees.js";
 import { prisma } from "../../lib/prisma.js";
-import type { CreatePayLinkInput, UpdatePayLinkInput } from "./schemas.js";
 import { generateSimpleAiText } from "../../services/ai.js";
+import type { CreatePayLinkInput, UpdatePayLinkInput } from "./schemas.js";
 
 // Generate a human-friendly unique slug by appending a numeric suffix when needed
 async function ensureUniqueSlug(baseSlug: string) {
@@ -109,7 +109,7 @@ export async function createPayLink(userId: string, data: CreatePayLinkInput) {
       data.product?.description ||
       "";
     if (!generatedSubtitle && desc) {
-      const prompt = `Scrie un subtitlu foarte scurt (max 8 cuvinte), clar și convingător pentru următoarea descriere a unui serviciu sau produs. Ton prietenos, fără emoji, fără ghilimele.\nDescriere: ${desc}`;
+      const prompt = `Scrie un subtitlu foarte scurt (max 5 cuvinte), clar și convingător pentru următoarea descriere a unui serviciu sau produs. Ton prietenos, fără emoji, fără ghilimele.\nDescriere: ${desc}`;
       const out = await generateSimpleAiText(prompt);
       generatedSubtitle = (out || "")
         .replace(/^\s*["'“”]/, "")
@@ -327,8 +327,8 @@ export async function findPublicPayLinkBySlug(slug: string) {
       userId: true,
       id: true,
       name: true,
-  displayName: true,
-  subtitle: true,
+      displayName: true,
+      subtitle: true,
       slug: true,
       priceType: true,
       amount: true,
@@ -392,8 +392,8 @@ export async function duplicatePayLink(userId: string, id: string) {
     data: {
       userId,
       name: newName,
-  displayName: (existing as any).displayName ?? null,
-  subtitle: (existing as any).subtitle ?? null,
+      displayName: (existing as any).displayName ?? null,
+      subtitle: (existing as any).subtitle ?? null,
       slug: newSlug,
       priceType: existing.priceType,
       amount: existing.amount,
