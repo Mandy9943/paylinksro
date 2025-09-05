@@ -71,13 +71,6 @@ export default function PayLinkPreview({
 
   return (
     <div className="space-y-2 text-sm">
-      <div className="text-2xl font-bold text-gray-900 mb-6">
-        {priceType === "FIXED"
-          ? addVat
-            ? `RON ${((amount ?? 0) * 1.21).toFixed(2)}`
-            : headerAmount
-          : headerAmount}
-      </div>
       <div className="flex justify-between">
         <span>{name}</span>
         <span>
