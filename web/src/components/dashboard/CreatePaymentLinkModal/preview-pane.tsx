@@ -94,10 +94,6 @@ export function PreviewPane() {
             </Button>
           </div>
         </div>
-
-        <div className="text-xs text-gray-500 mb-4">
-          🔗 paylink.ro/p/demo-link
-        </div>
       </div>
 
       <div
@@ -371,7 +367,7 @@ export function PreviewPane() {
               </Button>
 
               <div className="text-xs text-center text-gray-500 mt-4">
-                Securizat prin PayLink • Termeni • Confidențialitate
+                PayLinks • Termeni • Confidențialitate
               </div>
             </div>
           </div>

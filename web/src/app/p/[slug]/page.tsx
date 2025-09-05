@@ -278,7 +278,7 @@ export default async function PublicPayLinkPage({
               </div>
 
               <p className="text-xs text-gray-500 text-center leading-relaxed">
-                Securizat prin PayLink • Termeni • Confidențialitate
+                PayLinks • Termeni • Confidențialitate
               </p>
             </div>
           </div>
