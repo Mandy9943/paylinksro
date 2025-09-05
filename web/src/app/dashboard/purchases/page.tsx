@@ -33,19 +33,19 @@ export default function PurchasesPage() {
       <div className="space-y-4">
         {items.map((it) => (
           <div key={it.id} className="rounded border p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-start gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
                 {it.productCoverImageUrl ? (
                   <Image
                     src={it.productCoverImageUrl}
                     alt={it.productName || it.payLinkName}
                     width={64}
                     height={64}
-                    className="rounded object-cover"
+                    className="rounded object-cover flex-shrink-0"
                   />
                 ) : null}
-                <div>
-                  <div className="font-medium flex items-center gap-2">
+                <div className="min-w-0">
+                  <div className="font-medium flex items-center gap-2 truncate">
                     {it.payLinkName}
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
                       {it.serviceType === "SERVICE"
@@ -54,7 +54,7 @@ export default function PurchasesPage() {
                     </span>
                   </div>
                   {it.productName ? (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground truncate">
                       {it.productName}
                     </div>
                   ) : null}

@@ -119,7 +119,7 @@ export default function AffiliateProgram() {
       {/* Hero Card */}
       <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
         <CardContent className="p-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <div className="p-2 bg-blue-600 rounded-lg">
@@ -165,7 +165,7 @@ export default function AffiliateProgram() {
               </div>
             </div>
 
-            <div className="text-right">
+            <div className="lg:text-right w-full lg:w-auto">
               <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
                 <div className="text-3xl font-bold text-emerald-600 mb-1">
                   {formatRON(data?.totals?.lifetimeEarned)}
@@ -188,7 +188,7 @@ export default function AffiliateProgram() {
       </Card>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-0 shadow-sm bg-white">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -324,7 +324,7 @@ export default function AffiliateProgram() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-6">
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Referrals */}
         <Card className="border-0 shadow-sm bg-white">
           <CardHeader className="pb-3">

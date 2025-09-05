@@ -2,7 +2,6 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import {
   Dialog,
   DialogContent,
@@ -296,7 +295,7 @@ export default function Payouts() {
               {payouts.map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between py-3 text-sm"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3 text-sm"
                 >
                   <div className="flex flex-col">
                     <span className="font-medium">
@@ -306,7 +305,7 @@ export default function Payouts() {
                       {p.status.replace(/_/g, " ")}
                     </span>
                   </div>
-                  <div className="text-right text-gray-500">
+                  <div className="text-gray-500 sm:text-right">
                     <div>
                       {p.created ? new Date(p.created).toLocaleString() : "--"}
                     </div>

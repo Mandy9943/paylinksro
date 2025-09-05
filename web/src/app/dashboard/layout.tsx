@@ -12,9 +12,11 @@ import { AlertCircle, Loader, Menu, Plus, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Layout = ({ children }: { children: ReactNode }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -32,6 +34,11 @@ const Layout = ({ children }: { children: ReactNode }) => {
     captureTokenFromHash();
     setBootstrapped(true);
   }, []);
+
+  // Keep sidebar open on desktop, closed on mobile
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   // Restore banner visibility from localStorage
   useEffect(() => {
@@ -100,8 +107,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
       {/* Main Content */}
       <div
-        className={`flex-1 transition-all duration-300 ${
-          sidebarOpen ? "ml-60" : "ml-0"
+        className={`flex-1 transition-[margin] duration-300 ${
+          sidebarOpen ? "lg:ml-60" : "ml-0 lg:ml-0"
         }`}
       >
         {/* Header */}

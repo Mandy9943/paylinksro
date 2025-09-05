@@ -65,7 +65,7 @@ export function PreviewPane() {
   const slug = "demo-link";
 
   return (
-    <div className="w-1/2 bg-gray-50 p-6 overflow-y-auto">
+    <div className="w-full md:w-1/2 bg-gray-50 p-4 md:p-6 overflow-y-auto border-t md:border-t-0 md:border-l border-gray-200">
       <div className="mb-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900">Previzualizare</h3>

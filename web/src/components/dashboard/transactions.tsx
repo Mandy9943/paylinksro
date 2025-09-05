@@ -233,16 +233,16 @@ export default function Transactions() {
                       <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Sumă
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                      <TableHead className="hidden sm:table-cell text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Status
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                      <TableHead className="hidden md:table-cell text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Metodă de plată
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                      <TableHead className="hidden lg:table-cell text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Client
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                      <TableHead className="hidden lg:table-cell text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Data
                       </TableHead>
                     </TableRow>
@@ -263,7 +263,7 @@ export default function Transactions() {
                         <TableCell className="font-semibold text-slate-900 py-3">
                           {transaction.amount}
                         </TableCell>
-                        <TableCell className="py-3">
+                        <TableCell className="hidden sm:table-cell py-3">
                           <Badge
                             variant={
                               transaction.status === "Succeeded"
@@ -275,7 +275,7 @@ export default function Transactions() {
                             {transaction.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="py-3">
+                        <TableCell className="hidden md:table-cell py-3">
                           <div className="flex items-center space-x-2">
                             <PaymentMethodIcon
                               method={transaction.paymentMethod}
@@ -286,13 +286,13 @@ export default function Transactions() {
                           </div>
                         </TableCell>
                         <TableCell
-                          className={`text-sm text-slate-600 py-3 ${transaction.customerEmail ? "cursor-pointer" : ""}`}
+                          className={`hidden lg:table-cell text-sm text-slate-600 py-3 ${transaction.customerEmail ? "cursor-pointer" : ""}`}
                           title={transaction.customerEmail ? "Copiază email" : undefined}
                           onClick={transaction.customerEmail ? () => copyToClipboard(transaction.customerEmail as string, "Email copiat") : undefined}
                         >
                           {transaction.customer}
                         </TableCell>
-                        <TableCell className="text-sm text-slate-500 py-3">
+                        <TableCell className="hidden lg:table-cell text-sm text-slate-500 py-3">
                           {transaction.date}
                         </TableCell>
                       </TableRow>

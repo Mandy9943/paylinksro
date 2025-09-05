@@ -156,10 +156,10 @@ export default function CreatePaymentLinkModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70  flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-[90vh] md:h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-0 md:p-4">
+      <div className="bg-white rounded-none md:rounded-lg shadow-xl w-full max-w-6xl h-[100vh] md:h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="sticky top-0 z-10 bg-white flex items-center justify-between p-4 md:p-6 border-b">
           <div className="flex items-center space-x-3">
             <Button
               variant="ghost"
@@ -188,10 +188,10 @@ export default function CreatePaymentLinkModal({
           <form
             id="create-payment-link-form"
             onSubmit={form.handleSubmit(onSubmit, () => {})}
-            className="flex flex-1 overflow-hidden"
+            className="flex flex-1 overflow-hidden flex-col md:flex-row"
           >
             {/* Left Panel - Form */}
-            <div className="w-full md:w-1/2 p-6 overflow-y-auto">
+            <div className="w-full md:w-1/2 p-4 md:p-6 overflow-y-auto">
               {form.formState.isSubmitted && !form.formState.isValid && (
                 <div className="mb-4 rounded-md border border-red-300 bg-red-50 text-red-700 text-sm px-3 py-2">
                   Verifică câmpurile evidențiate mai jos.

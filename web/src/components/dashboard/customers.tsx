@@ -114,19 +114,19 @@ export default function Customers() {
                       <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Client
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                      <TableHead className="hidden md:table-cell text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Email
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                      <TableHead className="hidden lg:table-cell text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Metodă de plată
                       </TableHead>
                       <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Total cheltuit
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                      <TableHead className="hidden sm:table-cell text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Plăți
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
+                      <TableHead className="hidden lg:table-cell text-xs font-medium text-slate-500 bg-slate-50/50 py-3">
                         Ultima vizită
                       </TableHead>
                     </TableRow>
@@ -149,10 +149,10 @@ export default function Customers() {
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm text-slate-600 py-3">
+                        <TableCell className="hidden md:table-cell text-sm text-slate-600 py-3">
                           {customer.email || "—"}
                         </TableCell>
-                        <TableCell className="py-3">
+                        <TableCell className="hidden lg:table-cell py-3">
                           <div className="flex items-center space-x-2">
                             <PaymentMethodIcon method={{ brand: undefined }} />
                             <span className="text-xs text-slate-600">
@@ -163,10 +163,10 @@ export default function Customers() {
                         <TableCell className="font-semibold text-slate-900 py-3">
                           {formatRON(customer.totalAmount)}
                         </TableCell>
-                        <TableCell className="text-sm text-slate-600 py-3">
+                        <TableCell className="hidden sm:table-cell text-sm text-slate-600 py-3">
                           {customer.payments}
                         </TableCell>
-                        <TableCell className="text-sm text-slate-500 py-3">
+                        <TableCell className="hidden lg:table-cell text-sm text-slate-500 py-3">
                           {formatDate(customer.updatedAt)}
                         </TableCell>
                       </TableRow>

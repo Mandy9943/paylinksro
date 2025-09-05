@@ -164,18 +164,18 @@ export default function PaymentLinks() {
                 </div>
               ) : (
                 <Table>
-                  <TableHeader className="bg-slate-50/50">
+          <TableHeader className="bg-slate-50/50">
                     <TableRow className="border-b border-slate-200/60">
                       <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
                         Nume
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+            <TableHead className="hidden md:table-cell text-xs font-medium text-slate-600 py-3 px-4">
                         Tip
                       </TableHead>
                       <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
                         Preț
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-slate-600 py-3 px-4">
+            <TableHead className="hidden lg:table-cell text-xs font-medium text-slate-600 py-3 px-4">
                         Creat
                       </TableHead>
                       <TableHead className="w-12 py-3 px-4"></TableHead>
@@ -206,7 +206,7 @@ export default function PaymentLinks() {
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell className="py-3 px-4 text-xs text-slate-600">
+                        <TableCell className="hidden md:table-cell py-3 px-4 text-xs text-slate-600">
                           <span className="inline-flex items-center gap-1">
                             <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-400" />
                             {link.serviceType === "SERVICE"
@@ -223,7 +223,7 @@ export default function PaymentLinks() {
                             ? `RON ${Number(link.amount ?? 0).toFixed(2)}`
                             : "Clientul alege"}
                         </TableCell>
-                        <TableCell className="py-3 px-4 text-xs text-slate-600">
+                        <TableCell className="hidden lg:table-cell py-3 px-4 text-xs text-slate-600">
                           {new Date(link.createdAt).toLocaleString()}
                         </TableCell>
                         <TableCell className="py-3 px-4">
