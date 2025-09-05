@@ -243,6 +243,11 @@ model UserSettings {
     payoutInterval     PayoutInterval @default(daily)
     emailNotifications Boolean        @default(true)
 
+    // Bank details for manual payouts (optional)
+    bankIban          String?
+    bankAccountName   String?
+    bankName          String?
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }

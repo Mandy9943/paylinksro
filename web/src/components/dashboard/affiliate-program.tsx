@@ -26,8 +26,9 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 
 function formatRON(minor: number | undefined | null) {
   const v = (minor ?? 0) / 100;
@@ -338,9 +339,7 @@ export default function AffiliateProgram() {
                   <TableHead className="text-xs font-medium text-slate-600 py-2 px-3">
                     Client
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-slate-600 py-2 px-3">
-                    Prima Achiziție
-                  </TableHead>
+
                   <TableHead className="text-xs font-medium text-slate-600 py-2 px-3">
                     Comision
                   </TableHead>
@@ -364,11 +363,7 @@ export default function AffiliateProgram() {
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell className="py-2 px-3">
-                      <div className="text-xs font-medium text-slate-900">
-                        —
-                      </div>
-                    </TableCell>
+
                     <TableCell className="py-2 px-3">
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-semibold text-emerald-600">
@@ -474,26 +469,134 @@ function BankWithdraw({
   onDone: () => Promise<void> | void;
 }) {
   const [loading, setLoading] = useState(false);
-  const [details, setDetails] = useState("");
+  const { data: settings } = useSettings();
+  const { update, isUpdating } = useUpdateSettings();
+
+  // Local editable fields
+  const [iban, setIban] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [editing, setEditing] = useState(false);
+
+  // Prefill from settings when loaded
+  useEffect(() => {
+    if (settings) {
+      setIban((settings.bankIban ?? "").toString());
+      setAccountName((settings.bankAccountName ?? "").toString());
+      setBankName((settings.bankName ?? "").toString());
+      // If not filled yet, open editing by default
+      const hasAll = Boolean(settings.bankIban && settings.bankAccountName && settings.bankName);
+      setEditing(!hasAll);
+    }
+  }, [settings]);
+
   const minThreshold = 5000; // 50 RON in minor units
   const canWithdraw = available >= minThreshold;
+  const hasSavedDetails = Boolean(settings?.bankIban && settings?.bankAccountName && settings?.bankName);
+
+  const summaryDetails = () => {
+    const vIban = (settings?.bankIban ?? iban ?? "").toString();
+    const masked = vIban ? `${vIban.slice(0, 6)}••••••${vIban.slice(-4)}` : "—";
+    return `${masked} • ${settings?.bankAccountName ?? accountName ?? "—"} • ${
+      settings?.bankName ?? bankName ?? "—"
+    }`;
+  };
+
+  const validate = () => {
+    const i = (iban || "").trim();
+    const n = (accountName || "").trim();
+    const b = (bankName || "").trim();
+    // Minimal IBAN validation: starts with RO and length between 16 and 34
+    const ibanOk = /^RO[0-9A-Z]{2,32}$/i.test(i.replace(/\s+/g, ""));
+    if (!ibanOk) {
+      toast.error("IBAN invalid (trebuie să înceapă cu RO)");
+      return false;
+    }
+    if (n.length < 3) {
+      toast.error("Numele titularului este prea scurt");
+      return false;
+    }
+    if (b.length < 2) {
+      toast.error("Numele băncii este prea scurt");
+      return false;
+    }
+    return true;
+  };
+
+  const buildDetailsString = () => {
+    const i = iban.trim();
+    const n = accountName.trim();
+    const b = bankName.trim();
+    return `IBAN: ${i} | Titular: ${n} | Banca: ${b}`;
+  };
   return (
-    <div className="space-y-2">
-      <Input
-        placeholder="Detalii bancare (IBAN, nume, bancă) — necesare pentru retragere"
-        value={details}
-        onChange={(e) => setDetails(e.target.value)}
-        disabled={loading}
-      />
+    <div className="space-y-3">
+      {hasSavedDetails && !editing ? (
+        <div className="text-left text-xs text-slate-600">
+          <div className="mb-2">Detalii bancare salvate:</div>
+          <div className="p-2 rounded border border-slate-200 bg-slate-50 text-slate-800">
+            {summaryDetails()}
+          </div>
+          <div className="mt-2">
+            <button
+              type="button"
+              className="text-blue-600 hover:underline text-xs"
+              onClick={() => setEditing(true)}
+            >
+              Modifică detalii
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <Input
+            placeholder="IBAN (ex: RO49AAAA1B31007593840000)"
+            value={iban}
+            onChange={(e) => setIban(e.target.value)}
+            disabled={loading || isUpdating}
+          />
+          <Input
+            placeholder="Nume titular cont"
+            value={accountName}
+            onChange={(e) => setAccountName(e.target.value)}
+            disabled={loading || isUpdating}
+          />
+          <Input
+            placeholder="Nume bancă"
+            value={bankName}
+            onChange={(e) => setBankName(e.target.value)}
+            disabled={loading || isUpdating}
+          />
+        </div>
+      )}
+
       <Button
         onClick={async () => {
-          if (!canWithdraw || details.trim().length === 0) return;
+          if (!canWithdraw) return;
           try {
             setLoading(true);
-            await requestPayoutAllWithDetails(details.trim());
+            let detailsString = "";
+            if (editing || !hasSavedDetails) {
+              if (!validate()) return;
+              // Save to settings
+              await update({
+                bankIban: iban.trim(),
+                bankAccountName: accountName.trim(),
+                bankName: bankName.trim(),
+              });
+              detailsString = buildDetailsString();
+            } else {
+              // Build from saved settings
+              const i = (settings?.bankIban ?? "").toString();
+              const n = (settings?.bankAccountName ?? "").toString();
+              const b = (settings?.bankName ?? "").toString();
+              detailsString = `IBAN: ${i} | Titular: ${n} | Banca: ${b}`;
+            }
+
+            await requestPayoutAllWithDetails(detailsString);
             toast.success("Cerere de retragere trimisă.");
             await onDone();
-            setDetails("");
+            setEditing(false);
           } catch (err: unknown) {
             let msg = "Eroare la retragere";
             if (
@@ -524,7 +627,7 @@ function BankWithdraw({
             setLoading(false);
           }
         }}
-        disabled={!canWithdraw || loading || details.trim().length === 0}
+        disabled={!canWithdraw || loading || isUpdating || (!hasSavedDetails && editing && (!iban || !accountName || !bankName))}
         className="w-full paylink-button-primary"
       >
         {loading

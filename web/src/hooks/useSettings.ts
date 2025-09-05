@@ -7,6 +7,9 @@ export type UserSettings = {
   autoPayouts: boolean;
   payoutInterval: "daily" | "weekly" | "monthly" | "manual";
   emailNotifications: boolean;
+  bankIban?: string | null;
+  bankAccountName?: string | null;
+  bankName?: string | null;
 };
 
 export function useSettings() {

@@ -14,6 +14,9 @@ export async function updateMySettingsHandler(req: AuthedRequest, res: Response)
     autoPayouts: boolean;
     payoutInterval: "daily" | "weekly" | "monthly" | "manual";
     emailNotifications: boolean;
+  bankIban: string;
+  bankAccountName: string;
+  bankName: string;
   }>;
   const data = await updateUserSettings(userId, body);
   res.json({ settings: data });
