@@ -18,7 +18,6 @@ import {
   DollarSign,
   ExternalLink,
   Eye,
-  Gift,
   Mail,
   MessageCircle,
   Share2,
@@ -115,20 +114,6 @@ export default function AffiliateProgram() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-slate-500 mb-1">
-            Câștigă 0.5% din fiecare vânzare
-          </p>
-          <h2 className="text-xl font-semibold text-slate-900">
-            Program de Afiliere
-          </h2>
-        </div>
-        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1">
-          <Gift className="w-3.5 h-3.5 mr-1" />
-          Comision 0.5%
-        </Badge>
-      </div>
 
       {/* Hero Card */}
       <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
