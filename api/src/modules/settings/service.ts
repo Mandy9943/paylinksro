@@ -17,9 +17,9 @@ export async function updateUserSettings(
     autoPayouts: boolean;
     payoutInterval: "daily" | "weekly" | "monthly" | "manual";
     emailNotifications: boolean;
-  bankIban: string;
-  bankAccountName: string;
-  bankName: string;
+    bankIban: string;
+    bankAccountName: string;
+    bankName: string;
   }>
 ) {
   const settings = await prisma.userSettings.upsert({

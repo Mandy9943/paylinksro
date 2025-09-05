@@ -1,7 +1,7 @@
 "use client";
+import { api } from "@/lib/api";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import { api } from "@/lib/api";
 
 export type UserSettings = {
   autoPayouts: boolean;
@@ -33,7 +33,8 @@ export function useUpdateSettings() {
   // Optimistic update helper: merge partial patch into cached settings, rollback on error
   const update = (patch: Partial<UserSettings>) =>
     trigger(patch, {
-      optimisticData: (current?: UserSettings) => ({ ...(current ?? {}), ...patch }) as UserSettings,
+      optimisticData: (current?: UserSettings) =>
+        ({ ...(current ?? {}), ...patch } as UserSettings),
       rollbackOnError: true,
       // Trust server response to be the source of truth for the cache
       populateCache: (result: UserSettings) => result,

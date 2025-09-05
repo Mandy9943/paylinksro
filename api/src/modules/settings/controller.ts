@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import { AuthedRequest } from "../../middleware/auth.js";
 import { getUserSettings, updateUserSettings } from "./service.js";
 
@@ -8,15 +8,18 @@ export async function getMySettingsHandler(req: AuthedRequest, res: Response) {
   res.json({ settings: data });
 }
 
-export async function updateMySettingsHandler(req: AuthedRequest, res: Response) {
+export async function updateMySettingsHandler(
+  req: AuthedRequest,
+  res: Response
+) {
   const userId = req.user!.id;
   const body = (req as any).validated?.body as Partial<{
     autoPayouts: boolean;
     payoutInterval: "daily" | "weekly" | "monthly" | "manual";
     emailNotifications: boolean;
-  bankIban: string;
-  bankAccountName: string;
-  bankName: string;
+    bankIban: string;
+    bankAccountName: string;
+    bankName: string;
   }>;
   const data = await updateUserSettings(userId, body);
   res.json({ settings: data });

@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAffiliateSummary } from "@/hooks/use-affiliates";
+import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import {
   Copy,
   DollarSign,
@@ -26,9 +27,8 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 
 function formatRON(minor: number | undefined | null) {
   const v = (minor ?? 0) / 100;
@@ -485,14 +485,18 @@ function BankWithdraw({
       setAccountName((settings.bankAccountName ?? "").toString());
       setBankName((settings.bankName ?? "").toString());
       // If not filled yet, open editing by default
-      const hasAll = Boolean(settings.bankIban && settings.bankAccountName && settings.bankName);
+      const hasAll = Boolean(
+        settings.bankIban && settings.bankAccountName && settings.bankName
+      );
       setEditing(!hasAll);
     }
   }, [settings]);
 
   const minThreshold = 5000; // 50 RON in minor units
   const canWithdraw = available >= minThreshold;
-  const hasSavedDetails = Boolean(settings?.bankIban && settings?.bankAccountName && settings?.bankName);
+  const hasSavedDetails = Boolean(
+    settings?.bankIban && settings?.bankAccountName && settings?.bankName
+  );
 
   const summaryDetails = () => {
     const vIban = (settings?.bankIban ?? iban ?? "").toString();
@@ -627,7 +631,12 @@ function BankWithdraw({
             setLoading(false);
           }
         }}
-        disabled={!canWithdraw || loading || isUpdating || (!hasSavedDetails && editing && (!iban || !accountName || !bankName))}
+        disabled={
+          !canWithdraw ||
+          loading ||
+          isUpdating ||
+          (!hasSavedDetails && editing && (!iban || !accountName || !bankName))
+        }
         className="w-full paylink-button-primary"
       >
         {loading
