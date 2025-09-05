@@ -205,12 +205,16 @@ export async function onChargeSucceeded(event: any) {
               .filter(Boolean)
               .join(" · ")}</p>`
           : "";
+      const dashboardUrl = new URL(
+        "/dashboard/transactions",
+        env.APP_ORIGIN
+      ).toString();
       const htmlSeller = `
         <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
           <h2>Plată primită</h2>
           <p>Ai primit o plată de <strong>${amountStr}</strong> pentru <strong>${link.name}</strong>.</p>
           ${buyerLine}
-          <p style="color:#64748b; font-size: 12px; margin-top: 24px;">Poți vedea tranzacțiile în dashboard.</p>
+          <p style="color:#64748b; font-size: 12px; margin-top: 24px;">Poți vedea tranzacțiile în <a href="${dashboardUrl}"><strong>dashboard</strong></a>.</p>
         </div>
       `;
       await sendMail({
